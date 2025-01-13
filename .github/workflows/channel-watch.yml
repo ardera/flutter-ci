@@ -24,17 +24,39 @@ jobs:
         with:
           # We need to use a custom token here to be able to push commits.
           token: ${{ secrets.ENGINE_ROLL_TOKEN }}
-      
-      # If we only want to find out the stable engine version, we can do `wget -O engine.version.stable https://raw.githubusercontent.com/flutter/flutter/stable/bin/internal/engine.version`
-      # However we also want to find out the semver of the flutter release (3.0.5 for example), 
-      - name: Download latest engine.version
-        run: wget -O engine.version.stable https://raw.githubusercontent.com/flutter/flutter/stable/bin/internal/engine.version
-      
+
+      - name: Find current flutter stable commit and semver
+        id: resolve
+        env:
+          GIT_BASECMD: "git -c gc.autoDetach=false -c core.pager=cat -c safe.bareRepository=all"
+          FLUTTER_REPO: "https://github.com/flutter/flutter.git"
+        run: |
+          # Get the current commit of refs/heads/stable for the flutter repo.
+          FLUTTER_HASH=$($GIT_BASECMD ls-remote --exit-code --branches "$FLUTTER_REPO" "stable" | cut -f1)
+          
+          # Get all (full-qualified) tags that point to the engine commit
+          # e.g. refs/tags/2.10.0-0.0.pre.0
+          REFS=$($GIT_BASECMD ls-remote --tags "$FLUTTER_REPO" "$FLUTTER_HASH" | cut -f2)
+
+          test "$(wc -l <<< "$REFS")" -eq 1 || { echo "Expected exactly one ref pointing to the flutter commit, but got: $REFS"; exit 1; }
+
+          # Extract the tag names from the full-qualified refs
+          # e.g. 2.10.0-0.0.pre.0
+          TAGS=$(echo "$REFS" | cut -d/ -f3 | sort -V)
+          
+          # Extract the first tag
+          FIRST_TAG=$(head -n1 <<< "$TAGS")
+          
+          echo "semver=$FIRST_TAG" >> $GITHUB_OUTPUT
+
+          # Put it into "flutter.version.stable".
+          echo "$FLUTTER_HASH" > flutter.version.stable
+
       - name: Check if stable engine version changed 
         id: check-roll
         run: |
           git status
-          if git diff-index --quiet HEAD -- engine.version.stable; then
+          if git diff-index --quiet HEAD -- flutter.version.stable; then
             echo "No changes"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
@@ -44,21 +66,9 @@ jobs:
       
       - name: Log
         run: |
-          echo '*** Stable engine commit changed? ***'
+          echo '*** Stable flutter commit changed? ***'
           echo steps.check-roll.outputs.changed: ${{ steps.check-roll.outputs.changed }}
-      
-      # reference: https://github.com/flutter/flutter/blob/a880c4ed3590477380c975f867406ba336834848/packages/flutter_tools/lib/src/version.dart#L703
-      # if the flutter people ever decide to point more than one tags at the stable SDK commit we're in trouble here
-      - name: find out flutter SDK semver for this engine version
-        id: flutter-version
-        if: ${{ steps.check-roll.outputs.changed == 'true' }}
-        run: |
-          # read the engine.version.stable file to find the engine commit hash
-          # we're build for
-          ENGINE_HASH=$(cat engine.version.stable | tr -dc [:xdigit:])
-          
-          echo "hash=$ENGINE_HASH" >> $GITHUB_OUTPUT
-      
+
       - name: Commit new stable engine version
         # the if is not really necessary since the add-and-commit action won't push empty commits, but this way it feels safer
         # (it won't even push the tag if we have an empty commit)
@@ -67,6 +77,6 @@ jobs:
         with:
           default_author: github_actions
           message: 'Roll engine (stable)'
-          add: 'engine.version.stable'
-          tag: engine/${{ steps.flutter-version.outputs.hash }} --force
+          add: 'flutter.version.stable'
+          tag: flutter/${{ steps.resolve.outputs.tag }} --force
           tag_push: '--force'

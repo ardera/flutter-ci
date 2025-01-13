@@ -3,7 +3,7 @@ name: Build flutter engine and dart AOT compiler
 on:
   push:
     tags:
-      - 'engine/*'
+      - 'flutter/*'
   pull_request:
     branches: [ ci ]
   repository_dispatch:
@@ -27,25 +27,24 @@ jobs:
     name: 'Resolve relevant flutter versions'
     runs-on: ubuntu-latest
     outputs:
-      engine-hash: ${{ steps.resolve.outputs.hash }}
-      first-semver: ${{ steps.resolve.outputs.first-semver }}
-      sdk-semvers: ${{ steps.resolve.outputs.semvers }}
+      semver: ${{ steps.resolve.outputs.first-semver }}
+      hash: ${{ steps.resolve.outputs.flutter-hash }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve engine hash & SDK version
+      - name: Resolve flutter hash & SDK version
         id: resolve
         env:
           GIT_BASECMD: "git -c gc.autoDetach=false -c core.pager=cat -c safe.bareRepository=all"
-          ENGINE_REPO: "https://github.com/flutter/engine.git"
+          FLUTTER_REPO: "https://github.com/flutter/flutter.git"
         run: |
-          # read the engine.version.stable file to find the engine commit hash
-          # we're build for
-          ENGINE_HASH=$(cat engine.version.stable | tr -dc [:xdigit:])
+          # read the flutter.version.stable file to find the flutter hash
+          # that we're building for
+          FLUTTER_HASH=$(cat flutter.version.stable | tr -dc [:xdigit:])
 
           # Get all (full-qualified) tags that point to the engine commit
           # e.g. refs/tags/2.10.0-0.0.pre.0
-          REFS=$($GIT_BASECMD ls-remote --tags $ENGINE_REPO | grep $ENGINE_HASH | cut -f2)
+          REFS=$($GIT_BASECMD ls-remote --tags "$FLUTTER_REPO" "$FLUTTER_HASH" | cut -f2)
           
           # Extract the tag names from the full-qualified refs
           # e.g. 2.10.0-0.0.pre.0
@@ -57,9 +56,8 @@ jobs:
           # Serialize the tags to JSON
           TAGS_JSON="$(echo "$TAGS" | jq -ncMR '[inputs]')"
           
-          echo "hash=$ENGINE_HASH" >> $GITHUB_OUTPUT
           echo "first-semver=$FIRST_TAG" >> $GITHUB_OUTPUT
-          echo "semvers=$TAGS_JSON" >> $GITHUB_OUTPUT
+          echo "flutter-hash=$FLUTTER_HASH" >> $GITHUB_OUTPUT
 
   populate-engine-src-cache:
     name: 'Prepopulate engine source cache'
@@ -81,8 +79,8 @@ jobs:
       - uses: actions/cache/restore@v4
         id: cache-lookup
         with:
-          path: engine
-          key: engine-${{ needs.resolve-version.outputs.engine-hash }}-${{ runner.os }}-${{ runner.arch }}
+          path: flutter
+          key: flutter-${{ needs.resolve-version.outputs.hash }}-${{ runner.os }}-${{ runner.arch }}
           lookup-only: true
       
       - name: Install depot tools
@@ -118,23 +116,23 @@ jobs:
           echo python3 version:
           python3 --version
 
-      - name: Bootstrap engine environment
+      - name: Bootstrap flutter environment
         if: steps.cache-lookup.outputs.cache-hit != 'true'
         run: |
-          mkdir -p engine
-          cp dot-gclient.py engine/.gclient
+          mkdir -p flutter
+          cp dot-gclient.py flutter/.gclient
           
-      - name: Install engine sources
+      - name: Install flutter sources
         if: steps.cache-lookup.outputs.cache-hit != 'true'
-        working-directory: engine
+        working-directory: flutter
         env:
           DEPOT_TOOLS_UPDATE: 1
         run: |
-          gclient sync --no-history --shallow --revision src/flutter@${{ needs.resolve-version.outputs.first-semver }} -R -D
+          gclient sync --no-history --shallow --revision .@${{ needs.resolve-version.outputs.semver }} -R -D
       
       - name: Install linux arm sysroot
         if: steps.cache-lookup.outputs.cache-hit != 'true' && runner.os == 'Linux'
-        working-directory: engine/src/build/linux/sysroot_scripts
+        working-directory: flutter/engine/src/build/linux/sysroot_scripts
         run: |
           ./install-sysroot.py --arch=arm
           ./install-sysroot.py --arch=arm64
@@ -142,13 +140,13 @@ jobs:
 
       - name: Delete unneeded dependencies
         if: steps.cache-lookup.outputs.cache-hit != 'true'
-        working-directory: engine
+        working-directory: flutter/engine/
         run: |
           rm -rf src/fuchsia
       
       - name: Prune git history
         if: steps.cache-lookup.outputs.cache-hit != 'true'
-        working-directory: engine/src
+        working-directory: flutter/engine/src
         run: |
           for FILE in $(find . -type d -name .git)
           do
@@ -170,8 +168,8 @@ jobs:
         env:
           ZSTD_CLEVEL: 12
         with:
-          path: engine
-          key: engine-${{ needs.resolve-version.outputs.engine-hash }}-${{ runner.os }}-${{ runner.arch }}
+          path: flutter
+          key: flutter-${{ needs.resolve-version.outputs.hash }}-${{ runner.os }}-${{ runner.arch }}
   
   load-matrix:
     name: 'Generate build matrix'
@@ -231,8 +229,10 @@ jobs:
 
       - name: Log engine version & Build config
         run: |
-          echo '*** engine version: ***'
-          echo ${{ needs.resolve-version.outputs.engine-hash }}
+          echo '*** flutter commit hash: ***'
+          echo ${{ needs.resolve-version.outputs.hash }}
+          echo '*** flutter version: ***'
+          echo ${{ needs.resolve-version.outputs.semver }}
 
           echo '*** runner config: ***'
           echo matrix.os: ${{ matrix.os }}
@@ -267,7 +267,7 @@ jobs:
           echo build-universal: ${{ matrix.build-universal }}
 
           echo "GITHUB_WORKSPACE_UNIX=$(realpath .)" >> $GITHUB_ENV
-          echo "BUILD_DIR=$(realpath .)/engine/src/out/build" >> $GITHUB_ENV
+          echo "BUILD_DIR=$(realpath .)/flutter/engine/src/out/build" >> $GITHUB_ENV
           
       - name: Cache depot tools
         id: cache-depot-tools
@@ -309,26 +309,20 @@ jobs:
         env:
           SEGMENT_DOWNLOAD_TIMEOUT_MINS: 10
         with:
-          path: engine
-          key: engine-${{ needs.resolve-version.outputs.engine-hash }}-${{ runner.os }}-${{ runner.arch }}
+          path: flutter
+          key: flutter-${{ needs.resolve-version.outputs.hash }}-${{ runner.os }}-${{ runner.arch }}
           fail-on-cache-miss: true
   
       - name: Apply patches
-        working-directory: engine/src
+        working-directory: flutter
         # use git apply instead of git am to avoid `Committer identity unknown` error
         run: |
-          echo Applying buildroot patches... 
-          git apply $GITHUB_WORKSPACE_UNIX/buildroot-patches/*.patch
+          echo Applying patches...
+          git apply $GITHUB_WORKSPACE_UNIX/patches/*.patch
           git status
-          
-          pushd flutter
-          echo Applying engine patches...
-          git apply $GITHUB_WORKSPACE_UNIX/engine-patches/*.patch
-          git status
-          popd
 
           if [ -d "$GITHUB_WORKSPACE_UNIX/dart-patches" ]; then
-            pushd third_party/dart
+            pushd engine/src/flutter/third_party/dart
 
             git apply $GITHUB_WORKSPACE_UNIX/dart-patches/*.patch
             git status
@@ -339,14 +333,14 @@ jobs:
       # This can't be done in the prepopulate step since on MacOS, it depends
       # on a buildroot patch.
       - name: Download linux sysroot
-        working-directory: engine/src/build/linux/sysroot_scripts
+        working-directory: flutter/engine/src/build/linux/sysroot_scripts
         if: matrix.cpu && runner.os == 'macOS'
         timeout-minutes: 5
         run: |
           ./install-sysroot.py --arch=${{ matrix.cpu == 'x64' && 'amd64' || matrix.cpu }}
 
       - name: Configure engine
-        working-directory: engine/src
+        working-directory: flutter/engine/src
         run: |
           ./flutter/tools/gn \
             ${{ matrix.runtime-mode && format('--runtime-mode {0}', matrix.runtime-mode) || '' }} \
@@ -366,7 +360,7 @@ jobs:
             ${{ matrix.arm-tune && format('--gn-args ''arm_tune="{0}"''', matrix.arm-tune) || '' }}
       
       - name: Build engine
-        working-directory: engine/src/out/build
+        working-directory: flutter/engine/src/out/build
         run: |
           ninja \
             ${{ matrix.build-engine && 'libflutter_engine.so' || '' }} \
@@ -378,17 +372,17 @@ jobs:
       - name: Add engine.version and dart-sdk.version file
         if: matrix.build-universal
         run: |
-          cp engine.version.stable $BUILD_DIR/engine.version
+          cp flutter.version.stable $BUILD_DIR/flutter.version
           
-          pushd $GITHUB_WORKSPACE_UNIX/engine/src/flutter/third_party/dart
+          pushd $GITHUB_WORKSPACE_UNIX/flutter/engine/src/flutter/third_party/dart
           git rev-parse HEAD > $BUILD_DIR/dart-sdk.version
           popd
       
       - name: Split debug symbols
         if: matrix.build-engine && matrix.split-debug-symbols
-        working-directory: ${{ github.workspace }}/engine/src/out/build/
+        working-directory: ${{ github.workspace }}/flutter/engine/src/out/build/
         run: |
-          OBJCOPY="$GITHUB_WORKSPACE_UNIX/engine/src/flutter/buildtools/linux-x64/clang/bin/llvm-objcopy"
+          OBJCOPY="$GITHUB_WORKSPACE_UNIX/flutter/engine/src/flutter/buildtools/linux-x64/clang/bin/llvm-objcopy"
           
           $OBJCOPY --only-keep-debug libflutter_engine.so libflutter_engine.dbgsyms
           $OBJCOPY --strip-debug libflutter_engine.so
@@ -561,7 +555,7 @@ jobs:
       - name: Log engine version & Build config
         run: |
           echo *** engine version: ***
-          echo ${{ needs.resolve-version.outputs.engine-hash }}
+          echo ${{ needs.resolve-version.outputs.hash }}
           echo '*** config: ***'
           echo artifact name: ${{ matrix.artifact-name }}
 
@@ -778,7 +772,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: ${{ needs.resolve-version.outputs.first-semver }}
+          flutter-version: ${{ needs.resolve-version.outputs.semver }}
           cache: true
       
       - name: Determine flutter SDK path
@@ -1010,11 +1004,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Log engine version
-        run: |
-          echo *** engine version: ***
-          echo ${{ needs.resolve-version.outputs.engine-hash }}
-      
       - uses: actions/checkout@v4
         with:
           repository: ardera/flutter-engine-binaries-for-arm
@@ -1039,17 +1028,13 @@ jobs:
           rm arm/*.debug_unopt
           rm arm64/*.debug_unopt
      
-      - name: Log flutter version
-        run: |
-          echo flutter semvers: ${{ fromJson(needs.resolve-version.outputs.sdk-semvers) }}
-      
       - name: Commit new stable engine version
         uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actions
           cwd: ./engine-binaries
-          message: 'update engine binaries for flutter ${{ join(fromJson(needs.resolve-version.outputs.sdk-semvers)) }}'
-          tag: engine_${{ needs.resolve-version.outputs.engine-hash }} --force
+          message: 'update engine binaries for flutter ${{ needs.resolve-version.outputs.semver }}'
+          tag: engine_${{ needs.resolve-version.outputs.hash }} --force
           tag_push: '--force'
   
   release:
@@ -1060,11 +1045,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Log engine version
-        run: |
-          echo *** engine version: ***
-          echo ${{ needs.resolve-version.outputs.engine-hash }}
       
       - uses: actions/download-artifact@v4
         with:
@@ -1082,13 +1062,12 @@ jobs:
       
       - uses: softprops/action-gh-release@v1
         with:
-          name: ${{ join(fromJson(needs.resolve-version.outputs.sdk-semvers)) }}
+          name: ${{ needs.resolve-version.outputs.semver }}
           body: |
             | name | info | reference |
             | - | - | - |
             | flutter channel | stable | |
-            | flutter version | ${{ needs.resolve-version.outputs.first-semver }} | [flutter/flutter@`${{ needs.resolve-version.outputs.first-semver }}`](https://github.com/flutter/flutter/tree/${{ needs.resolve-version.outputs.first-semver }}) |
-            | engine version | ${{ needs.resolve-version.outputs.first-semver }} | [flutter/engine@`${{ needs.resolve-version.outputs.first-semver }}`](https://github.com/flutter/engine/tree/${{ needs.resolve-version.outputs.first-semver }}) |
+            | flutter version | ${{ needs.resolve-version.outputs.semver }} | [flutter/flutter@`${{ needs.resolve-version.outputs.semver }}`](https://github.com/flutter/flutter/tree/${{ needs.resolve-version.outputs.semver }}) |
           fail_on_unmatched_files: true
           files: |
             release-files/*
