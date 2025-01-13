@@ -117,43 +117,12 @@ jobs:
           echo
           echo python3 version:
           python3 --version
-      
-      - name: Check if engine has dead libcxx repo
-        id: check-dead-libcxx-repo
-        if: steps.cache-lookup.outputs.cache-hit != 'true'
-        env:
-          WGET_COMMAND: ${{ runner.os == 'Windows' && 'C:\msys64\usr\bin\wget.exe' || 'wget' }}
-        run: |
-          echo "::group::Downloading DEPS file"
-          $WGET_COMMAND https://raw.githubusercontent.com/flutter/engine/${{ needs.resolve-version.outputs.engine-hash }}/DEPS
-          echo "::endgroup::"
-          
-          echo "::group::DEPS file contents"
-          cat ./DEPS
-          echo "::endgroup::"
-
-          echo '::echo::on'
-          if grep -F "7524ef50093a376f334a62a7e5cebf5d238d4c99" ./DEPS
-          then
-            echo 'dead-libcxx-repo=true' >> $GITHUB_OUTPUT
-          else
-            echo 'dead-libcxx-repo=false' >> $GITHUB_OUTPUT
-          fi
-          echo '::echo::off'
-
-          rm ./DEPS
 
       - name: Bootstrap engine environment
-        if: steps.cache-lookup.outputs.cache-hit != 'true' && steps.check-dead-libcxx-repo.outputs.dead-libcxx-repo == 'false'
+        if: steps.cache-lookup.outputs.cache-hit != 'true'
         run: |
           mkdir -p engine
           cp dot-gclient.py engine/.gclient
-          
-      - name: Bootstrap engine environment (with dead libcxx repo workaround)
-        if: steps.cache-lookup.outputs.cache-hit != 'true' && steps.check-dead-libcxx-repo.outputs.dead-libcxx-repo == 'true'
-        run: |
-          mkdir -p engine
-          cp dot-gclient-fixed.py engine/.gclient
           
       - name: Install engine sources
         if: steps.cache-lookup.outputs.cache-hit != 'true'
