@@ -13,32 +13,35 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-for-roll:
-    name: 'Check if stable engine commit changed'
+  check-update:
+    name: 'Check for Flutter Updates'
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.check-roll.outputs.changed }}
+
+    strategy:
+      matrix: 
+        channel: [ stable, beta, master ]
 
     steps:
       - uses: actions/checkout@v3
         with:
+          ref: flutter/${{ matrix.channel }}
           # We need to use a custom token here to be able to push commits.
           token: ${{ secrets.ENGINE_ROLL_TOKEN }}
 
-      - name: Find current flutter stable commit and semver
+      - name: Find current flutter ${{ matrix.channel }} commit and semver
         id: resolve
         env:
           GIT_BASECMD: "git -c gc.autoDetach=false -c core.pager=cat -c safe.bareRepository=all"
           FLUTTER_REPO: "https://github.com/flutter/flutter.git"
         run: |
           # Get the current commit of refs/heads/stable for the flutter repo.
-          FLUTTER_HASH=$($GIT_BASECMD ls-remote --exit-code --branches "$FLUTTER_REPO" "stable" | cut -f1)
+          HASH=$($GIT_BASECMD ls-remote --exit-code --branches "$FLUTTER_REPO" "${{ matrix.channel }}" | cut -f1)
           
+          # Try to find a semver for this hash.
+
           # Get all (full-qualified) tags that point to the engine commit
           # e.g. refs/tags/2.10.0-0.0.pre.0
-          REFS=$($GIT_BASECMD ls-remote --tags "$FLUTTER_REPO" "$FLUTTER_HASH" | cut -f2)
-
-          test "$(wc -l <<< "$REFS")" -eq 1 || { echo "Expected exactly one ref pointing to the flutter commit, but got: $REFS"; exit 1; }
+          REFS=$($GIT_BASECMD ls-remote --tags "$FLUTTER_REPO" "$HASH" | cut -f2)
 
           # Extract the tag names from the full-qualified refs
           # e.g. 2.10.0-0.0.pre.0
@@ -49,34 +52,34 @@ jobs:
           
           echo "semver=$FIRST_TAG" >> $GITHUB_OUTPUT
 
-          # Put it into "flutter.version.stable".
-          echo "$FLUTTER_HASH" > flutter.version.stable
+          # Put it into "flutter.version".
+          echo "$HASH" > "flutter.version"
 
-      - name: Check if stable engine version changed 
+      - name: Check if flutter version changed 
         id: check-roll
         run: |
           git status
-          if git diff-index --quiet HEAD -- flutter.version.stable; then
+          if git diff-index --quiet HEAD -- flutter.version; then
             echo "No changes"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "Delta"
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Log
         run: |
-          echo '*** Stable flutter commit changed? ***'
+          echo '*** Flutter version changed? ***'
           echo steps.check-roll.outputs.changed: ${{ steps.check-roll.outputs.changed }}
 
-      - name: Commit new stable engine version
+      - name: Commit new flutter version
         # the if is not really necessary since the add-and-commit action won't push empty commits, but this way it feels safer
         # (it won't even push the tag if we have an empty commit)
         if: ${{ steps.check-roll.outputs.changed == 'true' }}
         uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actions
-          message: 'Roll engine (stable)'
-          add: 'flutter.version.stable'
-          tag: flutter/${{ steps.resolve.outputs.tag }} --force
+          message: 'Roll Flutter (${{ matrix.channel }})'
+          add: 'flutter.version'
+          tag: flutter/${{matrix.channel}}/${{ steps.resolve.outputs.semver || steps.resolve.outputs.hash }} --force
           tag_push: '--force'
