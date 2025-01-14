@@ -393,7 +393,7 @@ jobs:
             ${{ matrix.build-arm64-gen-snapshot && matrix.arm64-gen-snapshot-path || '' }} \
             ${{ matrix.build-universal && 'flutter_embedder.h icudtl.dat' || '' }}
 
-      - name: Add engine.version and dart-sdk.version file
+      - name: Add flutter.version and dart-sdk.version file
         if: matrix.build-universal
         run: |
           pushd $GITHUB_WORKSPACE_UNIX/flutter
@@ -476,7 +476,7 @@ jobs:
           cp \
             $BUILD_DIR/icudtl.dat \
             $BUILD_DIR/flutter_embedder.h \
-            $BUILD_DIR/engine.version \
+            $BUILD_DIR/flutter.version \
             $BUILD_DIR/dart-sdk.version \
             .
           
@@ -641,7 +641,7 @@ jobs:
           mv ../release/libflutter_engine.so ./libflutter_engine.so.release
           mv ../universal/flutter_embedder.h ./flutter_embedder.h
           mv ../universal/icudtl.dat ./icudtl.dat
-          mv ../universal/engine.version ./engine.version
+          mv ../universal/flutter.version ./flutter.version
           mv ../universal/dart-sdk.version ./dart-sdk.version
           
           # We previously copied <build-dir>/clang_x64/gen_snapshot to <build-dir>/gen_snapshot,
@@ -670,7 +670,7 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}
           path: |
-            pkg/engine.version
+            pkg/flutter.version
             pkg/dart-sdk.version
             pkg/flutter_embedder.h
             pkg/icudtl.dat
