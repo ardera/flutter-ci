@@ -281,7 +281,12 @@ jobs:
 
           echo "GITHUB_WORKSPACE_UNIX=$(realpath .)" >> $GITHUB_ENV
           echo "BUILD_DIR=$(realpath .)/flutter/engine/src/out/build" >> $GITHUB_ENV
-          
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      
       - name: Cache depot tools
         id: cache-depot-tools
         uses: actions/cache/restore@v4
