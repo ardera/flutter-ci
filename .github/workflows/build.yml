@@ -295,6 +295,7 @@ jobs:
       
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           winget install Ninja-build.Ninja
       
