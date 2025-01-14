@@ -396,7 +396,9 @@ jobs:
       - name: Add engine.version and dart-sdk.version file
         if: matrix.build-universal
         run: |
-          cp flutter.version.stable $BUILD_DIR/flutter.version
+          pushd $GITHUB_WORKSPACE_UNIX/flutter
+          git rev-parse HEAD > $BUILD_DIR/flutter.version
+          popd
           
           pushd $GITHUB_WORKSPACE_UNIX/flutter/engine/src/flutter/third_party/dart
           git rev-parse HEAD > $BUILD_DIR/dart-sdk.version
