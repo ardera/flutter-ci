@@ -159,7 +159,7 @@ jobs:
       
       - name: Prune git history
         if: steps.cache-lookup.outputs.cache-hit != 'true'
-        working-directory: flutter/engine/src
+        working-directory: flutter
         run: |
           for FILE in $(find . -type d -name .git)
           do
