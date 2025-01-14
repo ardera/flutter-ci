@@ -297,7 +297,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          winget install Ninja-build.Ninja
+          choco install ninja
       
       - name: Cache depot tools
         id: cache-depot-tools
