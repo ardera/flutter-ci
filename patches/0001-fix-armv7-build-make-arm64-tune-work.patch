@@ -1,18 +1,18 @@
-From bc53f5e909d333b67be09d16d599f246f95c870f Mon Sep 17 00:00:00 2001
+From a677c717c1b82923b590c8a6f7977f2a367418cc Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Wed, 11 Aug 2021 02:21:25 +0200
-Subject: [PATCH 1/4] fix armv7 build - make arm64 tune work
+Subject: [PATCH 1/5] fix armv7 build - make arm64 tune work
 
 ---
- build/config/arm.gni           | 27 +++-------
- build/config/compiler/BUILD.gn | 94 +++++++++++++++++++++++++---------
- build/config/sysroot.gni       |  8 ++-
+ engine/src/build/config/arm.gni           | 27 ++-----
+ engine/src/build/config/compiler/BUILD.gn | 94 +++++++++++++++++------
+ engine/src/build/config/sysroot.gni       |  8 +-
  3 files changed, 86 insertions(+), 43 deletions(-)
 
-diff --git a/build/config/arm.gni b/build/config/arm.gni
-index 02834cd..a2897ea 100644
---- a/build/config/arm.gni
-+++ b/build/config/arm.gni
+diff --git a/engine/src/build/config/arm.gni b/engine/src/build/config/arm.gni
+index 02834cd5fc..a2897ea9e8 100644
+--- a/engine/src/build/config/arm.gni
++++ b/engine/src/build/config/arm.gni
 @@ -22,8 +22,15 @@ if (current_cpu == "arm" || current_cpu == "arm64") {
      # The ARM variant-specific tuning mode. This will be a string like "armv6"
      # or "cortex-a15". An empty string means to use the default for the
@@ -56,10 +56,10 @@ index 02834cd..a2897ea 100644
      if (arm_float_abi == "") {
        arm_float_abi = "softfp"
      }
-diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
-index d38a4cf..d65f561 100644
---- a/build/config/compiler/BUILD.gn
-+++ b/build/config/compiler/BUILD.gn
+diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
+index 61e54bb04b..9a224e12ed 100644
+--- a/engine/src/build/config/compiler/BUILD.gn
++++ b/engine/src/build/config/compiler/BUILD.gn
 @@ -4,7 +4,7 @@
  
  import("//build/config/android/config.gni")
@@ -170,10 +170,10 @@ index d38a4cf..d65f561 100644
        }
      }
  
-diff --git a/build/config/sysroot.gni b/build/config/sysroot.gni
-index 5f7e48a..8bb5841 100644
---- a/build/config/sysroot.gni
-+++ b/build/config/sysroot.gni
+diff --git a/engine/src/build/config/sysroot.gni b/engine/src/build/config/sysroot.gni
+index 5f7e48a6f1..8bb5841899 100644
+--- a/engine/src/build/config/sysroot.gni
++++ b/engine/src/build/config/sysroot.gni
 @@ -25,10 +25,16 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
      if (current_cpu == "x64") {
        sysroot =
@@ -193,5 +193,5 @@ index 5f7e48a..8bb5841 100644
          exec_script("//build/dir_exists.py", [ sysroot ], "string") == "True",
          "Missing sysroot ($sysroot). To fix, run: build/linux/sysroot_scripts/install-sysroot.py --arch=$current_cpu")
 -- 
-2.43.0
+2.47.1
 
