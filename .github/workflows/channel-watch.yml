@@ -19,12 +19,11 @@ jobs:
 
     strategy:
       matrix: 
-        channel: [ stable, beta, master ]
+        channel: [ stable, beta ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          ref: flutter/${{ matrix.channel }}
           # We need to use a custom token here to be able to push commits.
           token: ${{ secrets.ENGINE_ROLL_TOKEN }}
 
@@ -53,13 +52,13 @@ jobs:
           echo "semver=$FIRST_TAG" >> $GITHUB_OUTPUT
 
           # Put it into "flutter.version".
-          echo "$HASH" > "flutter.version"
+          echo "$HASH" > "flutter.version.${{ matrix.channel }}"
 
       - name: Check if flutter version changed 
         id: check-roll
         run: |
           git status
-          if git diff-index --quiet HEAD -- flutter.version; then
+          if git diff-index --quiet HEAD -- flutter.version.${{ matrix.channel }} ; then
             echo "No changes"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
@@ -75,11 +74,12 @@ jobs:
       - name: Commit new flutter version
         # the if is not really necessary since the add-and-commit action won't push empty commits, but this way it feels safer
         # (it won't even push the tag if we have an empty commit)
-        if: ${{ steps.check-roll.outputs.changed == 'true' }}
+        # Also only push a commit if we're not in a PR.
+        if: ${{ steps.check-roll.outputs.changed == 'true' && !startsWith(github.ref, 'refs/pull/')}}
         uses: EndBug/add-and-commit@v9
         with:
           default_author: github_actions
           message: 'Roll Flutter (${{ matrix.channel }})'
-          add: 'flutter.version'
+          add: 'flutter.version.${{ matrix.channel }}'
           tag: flutter/${{matrix.channel}}/${{ steps.resolve.outputs.semver || steps.resolve.outputs.hash }} --force
           tag_push: '--force'
