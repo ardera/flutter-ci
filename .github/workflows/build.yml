@@ -296,9 +296,11 @@ jobs:
           echo build-arm-gen-snapshot: ${{ matrix.build-arm-gen-snapshot }}
           echo build-arm64-gen-snapshot: ${{ matrix.build-arm64-gen-snapshot }}
           echo build-x64-gen-snapshot: ${{ matrix.build-x64-gen-snapshot }}
+          echo build-riscv64-gen-snapshot: ${{ matrix.build-riscv64-gen-snapshot }}
           echo arm-gen-snapshot-path: ${{ matrix.arm-gen-snapshot-path }}
           echo arm64-gen-snapshot-path: ${{ matrix.arm64-gen-snapshot-path }}
           echo x64-gen-snapshot-path: ${{ matrix.x64-gen-snapshot-path }}
+          echo riscv64-gen-snapshot-path: ${{ matrix.riscv64-gen-snapshot-path }}
           
           echo build-universal: ${{ matrix.build-universal }}
 
@@ -420,6 +422,7 @@ jobs:
             ${{ matrix.build-x64-gen-snapshot && matrix.x64-gen-snapshot-path || '' }} \
             ${{ matrix.build-arm-gen-snapshot && matrix.arm-gen-snapshot-path || '' }} \
             ${{ matrix.build-arm64-gen-snapshot && matrix.arm64-gen-snapshot-path || '' }} \
+            ${{ matrix.build-riscv64-gen-snapshot && matrix.riscv64-gen-snapshot-path || '' }} \
             ${{ matrix.build-universal && 'flutter_embedder.h icudtl.dat' || '' }}
 
       - name: Add flutter.version and dart-sdk.version file
@@ -496,6 +499,16 @@ jobs:
           
           tar -cJvf ../gen-snapshot-${{ runner.os }}-ARM64-${{ matrix.artifact-name }}-${{ matrix.flavor }}.tar.xz *
   
+      - name: Package riscv64 gen_snapshot
+        if: matrix.build-riscv64-gen-snapshot
+        run: |
+          mkdir -p pkg-riscv64-gen-snapshot
+
+          pushd pkg-riscv64-gen-snapshot
+          cp $BUILD_DIR/${{ matrix.riscv64-gen-snapshot-path }} $BUILD_DIR/compile_commands.json .
+
+          tar -cJvf ../gen-snapshot-${{ runner.os }}-RISCV64-${{ matrix.artifact-name }}-${{ matrix.flavor }}.tar.xz *
+      
       - name: Package universal artifacts
         if: matrix.build-universal
         run: |
@@ -553,6 +566,20 @@ jobs:
           name: gen-snapshot-${{ runner.os }}-ARM64-${{ matrix.artifact-name }}-${{ matrix.flavor }}-tar-xz
           path: gen-snapshot-${{ runner.os }}-ARM64-${{ matrix.artifact-name }}-${{ matrix.flavor }}.tar.xz
 
+      - name: Upload riscv64 gen_snapshot
+        if: matrix.build-riscv64-gen-snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: gen-snapshot-${{ runner.os }}-RISCV64-${{ matrix.artifact-name }}-${{ matrix.flavor }}
+          path: pkg-riscv64-gen-snapshot/*
+      
+      - name: Upload riscv64 gen_snapshot (.tar.xz)
+        if: matrix.build-riscv64-gen-snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: gen-snapshot-${{ runner.os }}-RISCV64-${{ matrix.artifact-name }}-${{ matrix.flavor }}-tar-xz
+          path: gen-snapshot-${{ runner.os }}-RISCV64-${{ matrix.artifact-name }}-${{ matrix.flavor }}.tar.xz
+      
       - name: Upload engine
         if: matrix.build-engine
         uses: actions/upload-artifact@v4
@@ -731,6 +758,7 @@ jobs:
           - pi3-64
           - pi4
           - pi4-64
+          - riscv64-generic
         flavor:
           - debug_unopt
           - debug
@@ -974,6 +1002,7 @@ jobs:
           # - armv7-generic
           - aarch64-generic
           # - x64-generic
+          - riscv64-generic
         flavor:
           - debug_unopt
           - debug
