@@ -1,0 +1,29 @@
+From fe224673ba13dd3a573b6be873445fb9c17ac85e Mon Sep 17 00:00:00 2001
+From: Hannes Winkler <hanneswinkler2000@web.de>
+Date: Mon, 20 Jan 2025 15:42:05 +0000
+Subject: [PATCH 7/8] don't look for freetype2
+
+---
+ engine/src/build/config/linux/BUILD.gn | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/engine/src/build/config/linux/BUILD.gn b/engine/src/build/config/linux/BUILD.gn
+index b3ca187..734510a 100644
+--- a/engine/src/build/config/linux/BUILD.gn
++++ b/engine/src/build/config/linux/BUILD.gn
+@@ -27,9 +27,9 @@ config("fontconfig") {
+   libs = [ "fontconfig" ]
+ }
+ 
+-pkg_config("freetype2") {
+-  packages = [ "freetype2" ]
+-}
++#pkg_config("freetype2") {
++#  packages = [ "freetype2" ]
++#}
+ 
+ config("x11") {
+   libs = [
+-- 
+2.34.1
+

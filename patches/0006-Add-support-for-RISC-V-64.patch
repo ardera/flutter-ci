@@ -1,0 +1,108 @@
+From 001661436ed8d4b173341352d40d49d6959c7226 Mon Sep 17 00:00:00 2001
+From: Hannes Winkler <hanneswinkler2000@web.de>
+Date: Mon, 20 Jan 2025 15:41:41 +0000
+Subject: [PATCH 6/8] Add support for RISC-V 64
+
+- allows specifying `--linux-cpu=riscv64` for `gn` tool
+- adds riscv64 architecture recognitition to some headers
+- adds riscv64 support for native assets
+- specify `--target=riscv64-linux-gnu` when building for riscv64
+---
+ engine/src/build/config/compiler/BUILD.gn                  | 5 +++++
+ engine/src/build/config/sysroot.gni                        | 2 ++
+ engine/src/flutter/assets/native_assets.cc                 | 2 ++
+ engine/src/flutter/fml/build_config.h                      | 5 +++++
+ engine/src/flutter/third_party/tonic/common/build_config.h | 5 +++++
+ engine/src/flutter/tools/gn                                | 2 +-
+ 6 files changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
+index e95830f..f1aab0e 100644
+--- a/engine/src/build/config/compiler/BUILD.gn
++++ b/engine/src/build/config/compiler/BUILD.gn
+@@ -288,6 +288,11 @@ config("compiler") {
+       if (arm_tune != "") {
+         cflags += [ "-mtune=$arm_tune" ]
+       }
++    } else if (current_cpu == "riscv64") {
++      assert(is_clang)
++
++      cflags += [ "--target=riscv64-linux-gnu" ]
++      ldflags += [ "--target=riscv64-linux-gnu" ]
+     }
+ 
+     if (!is_android) {
+diff --git a/engine/src/build/config/sysroot.gni b/engine/src/build/config/sysroot.gni
+index 8bb5841..a392a01 100644
+--- a/engine/src/build/config/sysroot.gni
++++ b/engine/src/build/config/sysroot.gni
+@@ -31,6 +31,8 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
+     } else if (current_cpu == "arm") {
+       sysroot =
+           rebase_path("//build/linux/debian_sid_arm-sysroot", root_build_dir)
++    } else if (current_cpu == "riscv64") {
++      assert(false, "For riscv64, a custom sysroot must be used (or none at all), because the flutter engine does not provide a default riscv64 sysroot.")
+     } else {
+       assert(false, "Unknown CPU: $current_cpu.")
+     }
+diff --git a/engine/src/flutter/assets/native_assets.cc b/engine/src/flutter/assets/native_assets.cc
+index afdf7ad..3d3a410 100644
+--- a/engine/src/flutter/assets/native_assets.cc
++++ b/engine/src/flutter/assets/native_assets.cc
+@@ -17,6 +17,8 @@ namespace flutter {
+ #define kTargetArchitectureName "ia32"
+ #elif defined(FML_ARCH_CPU_X86_64)
+ #define kTargetArchitectureName "x64"
++#elif defined(FML_ARCH_CPU_RISCV64)
++#define kTargetArchitectureName "riscv64"
+ #else
+ #error Target architecture detection failed.
+ #endif
+diff --git a/engine/src/flutter/fml/build_config.h b/engine/src/flutter/fml/build_config.h
+index d42a88e..0008cc4 100644
+--- a/engine/src/flutter/fml/build_config.h
++++ b/engine/src/flutter/fml/build_config.h
+@@ -96,6 +96,11 @@
+ #elif defined(__pnacl__)
+ #define FML_ARCH_CPU_32_BITS 1
+ #define FML_ARCH_CPU_LITTLE_ENDIAN 1
++#elif defined(__riscv) && __riscv_xlen == 64 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++#define FML_ARCH_CPU_RISCV_FAMILY 1
++#define FML_ARCH_CPU_RISCV64 1
++#define FML_ARCH_CPU_64_BITS 1
++#define FML_ARCH_CPU_LITTLE_ENDIAN 1
+ #else
+ #error Please add support for your architecture in flutter/fml/build_config.h
+ #endif
+diff --git a/engine/src/flutter/third_party/tonic/common/build_config.h b/engine/src/flutter/third_party/tonic/common/build_config.h
+index 365808a..bdc18c0 100644
+--- a/engine/src/flutter/third_party/tonic/common/build_config.h
++++ b/engine/src/flutter/third_party/tonic/common/build_config.h
+@@ -103,6 +103,11 @@
+ #define ARCH_CPU_32_BITS 1
+ #define ARCH_CPU_LITTLE_ENDIAN 1
+ #endif
++#elif defined(__riscv) && __riscv_xlen == 64 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++#define ARCH_CPU_RISCV_FAMILY 1
++#define ARCH_CPU_RISCV64 1
++#define ARCH_CPU_64_BITS 1
++#define ARCH_CPU_LITTLE_ENDIAN 1
+ #else
+ #error Please add support for your architecture in build/build_config.h
+ #endif
+diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
+index 0c48252..c645626 100755
+--- a/engine/src/flutter/tools/gn
++++ b/engine/src/flutter/tools/gn
+@@ -923,7 +923,7 @@ def parse_args(args):
+   parser.add_argument('--web', action='store_true', default=False)
+   parser.add_argument('--windows', dest='target_os', action='store_const', const='win')
+ 
+-  parser.add_argument('--linux-cpu', type=str, choices=['x64', 'x86', 'arm64', 'arm'])
++  parser.add_argument('--linux-cpu', type=str, choices=['x64', 'x86', 'arm64', 'arm', 'riscv64'])
+   parser.add_argument('--fuchsia-cpu', type=str, choices=['x64', 'arm64'], default='x64')
+   parser.add_argument('--windows-cpu', type=str, choices=['x64', 'arm64', 'x86'], default='x64')
+   parser.add_argument('--simulator-cpu', type=str, choices=['x64', 'arm64'], default='x64')
+-- 
+2.34.1
+
