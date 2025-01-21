@@ -325,7 +325,13 @@ Object generateMatrix() {
           target.cpu == CPU.generic && flavor.buildGenSnapshot;
 
       if (buildGenSnapshot) {
-        for (final runner in runners) {
+        // win => risc-v gen_snapshot is currently not working, so exclude that.
+        final selectedRunners = switch (target.arch) {
+          Arch.riscv64 => runners.where((r) => r.os != OS.windows),
+          _ => runners,
+        };
+
+        for (final runner in selectedRunners) {
           // Only build the engine on the linux runner.
           final buildEngine = runner.os == OS.linux;
 
