@@ -394,9 +394,15 @@ jobs:
       
       # This can't be done in the prepopulate step since on MacOS, it depends
       # on a buildroot patch.
+      #
+      # We actually don't need the sysroots to build the gen_snapshots,
+      # but configuring will fail if they're missing.
+      #
+      # That's why the RISC-V gen_snapshots build fine, even though it
+      # doesn't have a sysroot.
       - name: Download linux sysroot
         working-directory: flutter/engine/src/build/linux/sysroot_scripts
-        if: matrix.cpu && runner.os == 'macOS'
+        if: matrix.cpu && matrix.cpu != 'riscv64' && runner.os == 'macOS'
         timeout-minutes: 5
         run: |
           ./install-sysroot.py --arch=${{ matrix.cpu == 'x64' && 'amd64' || matrix.cpu }}
