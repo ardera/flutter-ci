@@ -139,7 +139,7 @@ enum Target {
     triple: 'aarch64-linux-gnu',
   ),
   riscv64(
-    arch: Arch.x64,
+    arch: Arch.riscv64,
     name: 'riscv64-generic',
     triple: 'riscv64-linux-gnu',
   );

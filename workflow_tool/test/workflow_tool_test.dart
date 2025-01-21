@@ -357,4 +357,18 @@ void main() {
       ),
     );
   });
+
+  test('every arch is present', () {
+    final matrix = generateMatrix();
+
+    expect(
+      matrix,
+      allOf([
+        for (final arch in ['arm', 'arm64', 'x64', 'riscv64'])
+          anyElement(
+            containsPair('cpu', arch)
+          )
+      ])
+    );
+  });
 }
