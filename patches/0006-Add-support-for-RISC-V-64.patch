@@ -1,4 +1,4 @@
-From 001661436ed8d4b173341352d40d49d6959c7226 Mon Sep 17 00:00:00 2001
+From b6c7e1e9bd74fd091cb36755c9cb850cb0439552 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Mon, 20 Jan 2025 15:41:41 +0000
 Subject: [PATCH 6/8] Add support for RISC-V 64
@@ -7,14 +7,16 @@ Subject: [PATCH 6/8] Add support for RISC-V 64
 - adds riscv64 architecture recognitition to some headers
 - adds riscv64 support for native assets
 - specify `--target=riscv64-linux-gnu` when building for riscv64
+- ignore "use_default_linux_sysroot" for RISC-V 64,
+  since there is no default linux sysroot for RISC-V
 ---
- engine/src/build/config/compiler/BUILD.gn                  | 5 +++++
- engine/src/build/config/sysroot.gni                        | 2 ++
- engine/src/flutter/assets/native_assets.cc                 | 2 ++
- engine/src/flutter/fml/build_config.h                      | 5 +++++
- engine/src/flutter/third_party/tonic/common/build_config.h | 5 +++++
- engine/src/flutter/tools/gn                                | 2 +-
- 6 files changed, 20 insertions(+), 1 deletion(-)
+ engine/src/build/config/compiler/BUILD.gn             |  5 +++++
+ engine/src/build/config/sysroot.gni                   | 11 ++++++++++-
+ engine/src/flutter/assets/native_assets.cc            |  2 ++
+ engine/src/flutter/fml/build_config.h                 |  5 +++++
+ .../flutter/third_party/tonic/common/build_config.h   |  5 +++++
+ engine/src/flutter/tools/gn                           |  2 +-
+ 6 files changed, 28 insertions(+), 2 deletions(-)
 
 diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
 index e95830f..f1aab0e 100644
@@ -33,18 +35,27 @@ index e95830f..f1aab0e 100644
  
      if (!is_android) {
 diff --git a/engine/src/build/config/sysroot.gni b/engine/src/build/config/sysroot.gni
-index 8bb5841..a392a01 100644
+index 8bb5841..0e470ae 100644
 --- a/engine/src/build/config/sysroot.gni
 +++ b/engine/src/build/config/sysroot.gni
-@@ -31,6 +31,8 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
-     } else if (current_cpu == "arm") {
+@@ -21,7 +21,16 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
+   import("//build/config/android/config.gni")
+   sysroot = rebase_path("$android_toolchain_root/sysroot", root_build_dir)
+ } else if (is_linux && !is_chromeos) {
+-  if (use_default_linux_sysroot && !is_fuchsia) {
++  # install-sysroot.py doesn't provide a RISC-V 64 sysroot, which means
++  # we can't provide a default sysroot.
++  # 
++  # If we make this fail here, when use_default_linux_sysroot == true and 
++  # current_cpu == "riscv64", the sysroot choosing for arm/arm64/x64
++  # will fail as well, so we wouldn't be able to cross-compile the gen_snapshots
++  # and build the libflutter_engine.so in one build anymore.
++  #
++  # Instead we just silently use no sysroot for riscv64 at all.
++  if (use_default_linux_sysroot && !is_fuchsia && current_cpu != "riscv64") {
+     if (current_cpu == "x64") {
        sysroot =
-           rebase_path("//build/linux/debian_sid_arm-sysroot", root_build_dir)
-+    } else if (current_cpu == "riscv64") {
-+      assert(false, "For riscv64, a custom sysroot must be used (or none at all), because the flutter engine does not provide a default riscv64 sysroot.")
-     } else {
-       assert(false, "Unknown CPU: $current_cpu.")
-     }
+           rebase_path("//build/linux/debian_sid_amd64-sysroot", root_build_dir)
 diff --git a/engine/src/flutter/assets/native_assets.cc b/engine/src/flutter/assets/native_assets.cc
 index afdf7ad..3d3a410 100644
 --- a/engine/src/flutter/assets/native_assets.cc

@@ -1,4 +1,4 @@
-From fe224673ba13dd3a573b6be873445fb9c17ac85e Mon Sep 17 00:00:00 2001
+From 2cfc04692787c982611920347dc0e063f3325d19 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Mon, 20 Jan 2025 15:42:05 +0000
 Subject: [PATCH 7/8] don't look for freetype2
