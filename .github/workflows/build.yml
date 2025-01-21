@@ -391,6 +391,15 @@ jobs:
 
             popd
           fi
+
+          if [ -d "$GITHUB_WORKSPACE_UNIX/abseil-patches" ]; then
+            pushd engine/src/flutter/third_party/abseil-cpp
+
+            git apply $GITHUB_WORKSPACE_UNIX/abseil-patches/*.patch
+            git status
+
+            popd
+          fi
       
       # This can't be done in the prepopulate step since on MacOS, it depends
       # on a buildroot patch.
