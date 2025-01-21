@@ -312,6 +312,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build
+
+          # The engine scripts don't provide a sysroot for RISC-V 64,
+          # so we rely on the headers/libs provided by the gcc-riscv64-linux-gnu
+          # cross toolchain.
+          if ${{ matrix.build-riscv64-gen-snapshot || (matrix.build-engine && matrix.cpu == 'riscv64') }}; then
+            sudo apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
+          fi
       
       - name: Install dependencies (MacOS)
         if: runner.os == 'macOS'
