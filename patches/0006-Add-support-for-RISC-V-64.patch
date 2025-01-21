@@ -1,4 +1,4 @@
-From b6c7e1e9bd74fd091cb36755c9cb850cb0439552 Mon Sep 17 00:00:00 2001
+From fae000912e136620d4a0d1ee278c158622be18dd Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Mon, 20 Jan 2025 15:41:41 +0000
 Subject: [PATCH 6/8] Add support for RISC-V 64
@@ -9,14 +9,18 @@ Subject: [PATCH 6/8] Add support for RISC-V 64
 - specify `--target=riscv64-linux-gnu` when building for riscv64
 - ignore "use_default_linux_sysroot" for RISC-V 64,
   since there is no default linux sysroot for RISC-V
+- cross-compile risc-v gen_snapshot as well
+- only generate a clang_arm/gen_snapshot target when building
+  for a 32-bit target (so only arm right now)
 ---
  engine/src/build/config/compiler/BUILD.gn             |  5 +++++
  engine/src/build/config/sysroot.gni                   | 11 ++++++++++-
+ engine/src/flutter/BUILD.gn                           | 10 +++++++---
  engine/src/flutter/assets/native_assets.cc            |  2 ++
  engine/src/flutter/fml/build_config.h                 |  5 +++++
  .../flutter/third_party/tonic/common/build_config.h   |  5 +++++
  engine/src/flutter/tools/gn                           |  2 +-
- 6 files changed, 28 insertions(+), 2 deletions(-)
+ 7 files changed, 35 insertions(+), 5 deletions(-)
 
 diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
 index e95830f..f1aab0e 100644
@@ -56,6 +60,29 @@ index 8bb5841..0e470ae 100644
      if (current_cpu == "x64") {
        sysroot =
            rebase_path("//build/linux/debian_sid_amd64-sysroot", root_build_dir)
+diff --git a/engine/src/flutter/BUILD.gn b/engine/src/flutter/BUILD.gn
+index aee34b3..e5e80d6 100644
+--- a/engine/src/flutter/BUILD.gn
++++ b/engine/src/flutter/BUILD.gn
+@@ -96,11 +96,15 @@ group("flutter") {
+   if (!is_fuchsia) {
+     public_deps += [ "//flutter/lib/snapshot:generate_snapshot_bins" ]
+ 
+-    if (host_os == "linux") {
++    if (host_os == "linux" && target_os == "linux") {
+       public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_x64)" ]
+       public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_arm64)" ]
+-      public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_arm)" ]
+-    }
++      public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_riscv64)" ]
++      
++      if (target_cpu == "arm") {
++        public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_arm)" ]
++      }
++   }
+ 
+     if (build_engine_artifacts) {
+       public_deps += [
 diff --git a/engine/src/flutter/assets/native_assets.cc b/engine/src/flutter/assets/native_assets.cc
 index afdf7ad..3d3a410 100644
 --- a/engine/src/flutter/assets/native_assets.cc

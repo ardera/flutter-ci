@@ -1,4 +1,4 @@
-From b45905a75a5ac2d0370739a7eee51ee63560e3a7 Mon Sep 17 00:00:00 2001
+From f5b0edb915917ce78fffb208be7941b769c17eca Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Mon, 20 Jan 2025 16:23:24 +0000
 Subject: [PATCH 8/8] don't use vulkan xcb/wayland WSI integrations
