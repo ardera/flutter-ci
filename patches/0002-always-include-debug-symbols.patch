@@ -1,19 +1,19 @@
-From f8148f799ea7f17a64180f1deb799de92ee090e0 Mon Sep 17 00:00:00 2001
+From 5c8d460543b0ab2de0ff32e4385abaa1eac50bca Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Thu, 22 Jun 2023 16:30:00 +0000
-Subject: [PATCH 2/4] always include debug symbols
+Subject: [PATCH 2/5] always include debug symbols
 
 Always build with `-ggdb -fdebug-default-version=4` by default.
 Symbols are stripped later anyway and they're still useful for debugging.
 ---
- build/config/compiler/BUILD.gn | 6 +++---
+ engine/src/build/config/compiler/BUILD.gn | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
-index d65f561..b184499 100644
---- a/build/config/compiler/BUILD.gn
-+++ b/build/config/compiler/BUILD.gn
-@@ -1015,7 +1015,7 @@ config("symbols") {
+diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
+index 9a224e12ed..e95830f271 100644
+--- a/engine/src/build/config/compiler/BUILD.gn
++++ b/engine/src/build/config/compiler/BUILD.gn
+@@ -1023,7 +1023,7 @@ config("symbols") {
        ldflags = [ "-gsource-map" ]
      }
    } else {
@@ -22,7 +22,7 @@ index d65f561..b184499 100644
    }
  }
  
-@@ -1024,13 +1024,13 @@ config("minimal_symbols") {
+@@ -1032,13 +1032,13 @@ config("minimal_symbols") {
      # Linker symbols for backtraces only.
      ldflags = [ "/DEBUG" ]
    } else {
@@ -39,5 +39,5 @@ index d65f561..b184499 100644
  }
  
 -- 
-2.43.0
+2.47.1
 

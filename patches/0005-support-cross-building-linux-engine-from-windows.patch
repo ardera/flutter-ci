@@ -1,0 +1,49 @@
+From 642a2e205828606f2106e267ce4d36f9c24fbd3d Mon Sep 17 00:00:00 2001
+From: Hannes Winkler <hanneswinkler2000@web.de>
+Date: Tue, 21 May 2024 19:37:26 +0200
+Subject: [PATCH 5/5] support cross-building linux engine from windows
+
+(partially, only enough to be able to build gen_snapshot)
+---
+ engine/src/build/config/BUILDCONFIG.gn | 2 ++
+ engine/src/flutter/tools/gn            | 4 ++--
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/engine/src/build/config/BUILDCONFIG.gn b/engine/src/build/config/BUILDCONFIG.gn
+index b54e51596e..2ddd948fc0 100644
+--- a/engine/src/build/config/BUILDCONFIG.gn
++++ b/engine/src/build/config/BUILDCONFIG.gn
+@@ -560,6 +560,8 @@ if (custom_toolchain != "") {
+     }
+   } else if (host_os == "mac") {
+     host_toolchain = "//build/toolchain/mac:clang_$host_cpu"
++  } else if (host_os == "win") {
++    host_toolchain = "//build/toolchain/win:clang_$host_cpu"
+   }
+   if (is_clang) {
+     set_default_toolchain("//build/toolchain/linux:clang_$current_cpu")
+diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
+index 51173f3a3d..0c482528e3 100755
+--- a/engine/src/flutter/tools/gn
++++ b/engine/src/flutter/tools/gn
+@@ -502,7 +502,7 @@ def to_gn_args(args):
+   # does not exist. Further, we set the 'host_cpu' so that it shares the
+   # bitwidth of the 32-bit arm target.
+   if sys.platform.startswith(
+-      ('cygwin', 'win')) and args.target_os == 'android' and gn_args['target_cpu'] == 'arm':
++      ('cygwin', 'win')) and (args.target_os == 'android' or args.target_os == "linux") and gn_args['target_cpu'] == 'arm':
+     gn_args['host_cpu'] = 'x86'
+     gn_args['current_cpu'] = 'x86'
+ 
+@@ -730,7 +730,7 @@ def to_gn_args(args):
+   # gen_snapshot, but the build defines otherwise make it look like the build is
+   # for a host Windows build and make GN think we will be building ANGLE.
+   # Angle is not used on Mac hosts as there are no tests for the OpenGL backend.
+-  if is_host_build(args) or (args.target_os == 'android' and get_host_os() == 'win'):
++  if is_host_build(args) or ((args.target_os == 'android' or args.target_os == 'linux') and get_host_os() == 'win'):
+     # Don't include git commit information.
+     gn_args['angle_enable_commit_id'] = False
+     # Do not build unnecessary parts of the ANGLE tree.
+-- 
+2.47.1
+
