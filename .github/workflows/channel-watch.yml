@@ -12,6 +12,9 @@ on:
 
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+
 jobs:
   check-update:
     name: 'Check for Flutter Updates'
@@ -33,31 +36,59 @@ jobs:
           GIT_BASECMD: "git -c gc.autoDetach=false -c core.pager=cat -c safe.bareRepository=all"
           FLUTTER_REPO: "https://github.com/flutter/flutter.git"
         run: |
-          # Get the current commit of refs/heads/stable for the flutter repo.
-          HASH=$($GIT_BASECMD ls-remote --exit-code --branches "$FLUTTER_REPO" "${{ matrix.channel }}" | cut -f1)
+          set -euo pipefail
           
-          # Try to find a semver for this hash.
-
+          # First, try to find a /bin/internal/engine.version file in the engine repo.
+          ENGINE_HASH=$(curl https://raw.githubusercontent.com/flutter/flutter/refs/heads/${{ matrix.channel }}/bin/internal/engine.version)
+          
+          # Also, get the current commit of refs/heads/stable for the flutter repo.
+          #
+          # pipefail is enabled so the `cut` won't mask the exit code of the git ls-remote, which fails if we don't
+          # find a ref matching refs/tags/stable (or beta).
+          FLUTTER_HASH=$($GIT_BASECMD ls-remote --refs --exit-code "$FLUTTER_REPO" "refs/heads/${{ matrix.channel }}" | cut -f1)
+          
+          # If the engine.version file doesn't exist, the engine commit is the flutter commit.
+          if test -z "$ENGINE_HASH"; then
+            ENGINE_HASH="$FLUTTER_HASH"
+          fi
+          
+          # Try to find a semver for the flutter hash.
+          #
           # Get all (full-qualified) tags that point to the engine commit
           # e.g. refs/tags/2.10.0-0.0.pre.0
-          REFS=$($GIT_BASECMD ls-remote --tags "$FLUTTER_REPO" "$HASH" | cut -f2)
 
-          # Extract the tag names from the full-qualified refs
-          # e.g. 2.10.0-0.0.pre.0
-          TAGS=$(echo "$REFS" | cut -d/ -f3 | sort -V)
-          
-          # Extract the first tag
-          FIRST_TAG=$(head -n1 <<< "$TAGS")
-          
-          echo "semver=$FIRST_TAG" >> $GITHUB_OUTPUT
+          set +e
+          REFS=$($GIT_BASECMD ls-remote --exit-code --refs --tags "$FLUTTER_REPO" "refs/tags/*" | grep "$FLUTTER_HASH")
+          FOUND_REF=$?
+          set -e
 
-          # Put it into "flutter.version".
-          echo "$HASH" > "flutter.version.${{ matrix.channel }}"
+          if test $FOUND_REF -eq 0; then
+            # Extract the tag names from the full-qualified refs
+            # e.g. 2.10.0-0.0.pre.0
+            TAGS=$(echo "$REFS" | cut -f2 | cut -d/ -f3 | sort -V)
+            FIRST_TAG=$(head -n1 <<< "$TAGS")
+
+            # Extract the first tag
+            echo "semver=$FIRST_TAG" >> $GITHUB_OUTPUT
+          fi
+
+          echo "hash=$ENGINE_HASH" >> $GITHUB_OUTPUT
+
+          # Put the engine hash into "flutter.version".
+          echo "$ENGINE_HASH" > "flutter.version.${{ matrix.channel }}"
 
       - name: Check if flutter version changed 
         id: check-roll
         run: |
+          echo "::group::git status"
           git status
+          echo "::endgroup::"
+
+          # Necessary to also get a delta with unversioned files
+          # (i.e. if we're diffing flutter.version.stable but flutter.version.stable does not
+          # yet exist in the repository) 
+          git add --intent-to-add .
+
           if git diff-index --quiet HEAD -- flutter.version.${{ matrix.channel }} ; then
             echo "No changes"
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -70,16 +101,27 @@ jobs:
         run: |
           echo '*** Flutter version changed? ***'
           echo steps.check-roll.outputs.changed: ${{ steps.check-roll.outputs.changed }}
+      
+      - name: Commit & Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit new flutter version
-        # the if is not really necessary since the add-and-commit action won't push empty commits, but this way it feels safer
-        # (it won't even push the tag if we have an empty commit)
-        # Also only push a commit if we're not in a PR.
-        if: ${{ steps.check-roll.outputs.changed == 'true' && !startsWith(github.ref, 'refs/pull/')}}
-        uses: EndBug/add-and-commit@v9
-        with:
-          default_author: github_actions
-          message: 'Roll Flutter (${{ matrix.channel }})'
-          add: 'flutter.version.${{ matrix.channel }}'
-          tag: flutter/${{matrix.channel}}/${{ steps.resolve.outputs.semver || steps.resolve.outputs.hash }} --force
-          tag_push: '--force'
+          # If we don't have anything new, this will stage nothing,
+          # and we won't push anything.
+          set +x
+          git add 'flutter.version.${{ matrix.channel }}'
+
+          git commit <<EOF
+          Roll Flutter (${{ matrix.channel }})
+          
+          Update ${{ matrix.channel }} engine version to ${{ steps.resolve.outputs.hash }}
+          corresponding to Flutter SDK ${{ steps.resolve.outputs.semver }}.
+          EOF
+          
+          git tag flutter/${{ matrix.channel }}/${{ steps.resolve.outputs.semver }}
+          git tag engine/${{ steps.resolve.outputs.hash }}
+          set -x
+          
+          git push ${{ startsWith(github.ref, 'refs/pull/') && '--dry-run' || '' }}
+          git push --tags -f ${{ startsWith(github.ref, 'refs/pull/') && '--dry-run' || '' }}

@@ -3,8 +3,7 @@ name: Build flutter engine and dart AOT compiler
 on:
   push:
     tags:
-      - 'flutter/stable/*'
-      - 'flutter/beta/*'
+      - 'engine/*'
   pull_request:
     branches: [ ci ]
   repository_dispatch:
@@ -28,9 +27,33 @@ jobs:
     name: 'Resolve relevant flutter versions'
     runs-on: ubuntu-latest
     outputs:
+      # semver of the Flutter SDK that is using this engine.
+      # If there are multiple SDKs using this engine, the first
+      # semver is used.
       semver: ${{ steps.resolve.outputs.first-semver }}
-      hash: ${{ steps.resolve.outputs.flutter-hash }}
+      
+      # Commit Hash of the Flutter SDK that is using this engine.
+      flutter-hash: ${{ steps.resolve.outputs.flutter-hash }}
+      
+      # Even though engine and flutter are in the same repo,
+      # the Flutter SDK might use a different commit of the repo
+      # as the engine.
+      # So there's actually 2 versions, the flutter SDK version,
+      # and the engine version.
+      # Multiple SDK versions might also use the same engine version.
+      #
+      # The engine-hash and engine-ref are the hash and ref name (e.g. 3.29.0)
+      # of the Flutter SDK commit that is being used as the engine.
+      #
+      # Only the hash is guaranteed to be present. The ref name is only
+      # present when the Flutter SDK version and engine version are equal.
+      engine-hash: ${{ steps.resolve.outputs.engine-hash }}
+      engine-ref: ${{ steps.resolve.outputs.engine-ref }}
+      
       channel: ${{ steps.resolve.outputs.channel }}
+
+      is-stable: ${{ steps.resolve.outputs.is-stable }}
+      is-beta: ${{ steps.resolve.outputs.is-beta }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,37 +63,32 @@ jobs:
           GIT_BASECMD: "git -c gc.autoDetach=false -c core.pager=cat -c safe.bareRepository=all"
           FLUTTER_REPO: "https://github.com/flutter/flutter.git"
         run: |
-          if ${{ startsWith(github.ref, 'refs/pull/') }}; then
-            CHANNEL="pr"
+          set -euo pipefail
+          
+          STABLE_REF="$(git tag --points-at HEAD 'flutter/stable/*' | cut -f1 | cut -d/ -f3)"
+          BETA_REF="$(git tag --points-at HEAD 'flutter/beta/*' | cut -f1 | cut -d/ -f3)"
+          
+          if test -n $STABLE_REF; then
+            echo "is-stable=true" >> $GITHUB_OUTPUT
+            echo "is-beta=false" >> $GITHUB_OUTPUT
+            echo "first-semver=$STABLE_REF"
+            CHANNEL=stable
+          elif test -n $BETA_REF; then
+            echo "is-stable=false" >> $GITHUB_OUTPUT
+            echo "is-beta=true" >> $GITHUB_OUTPUT
+            echo "first-semver=$BETA_REF"
+            CHANNEL=beta
           else
-            CHANNEL="$(echo "$GITHUB_REF" | cut -d/ -f4)"
+            echo "Could not determine channel."
+            exit 1
           fi
-
-          echo "channel=$CHANNEL" >> $GITHUB_OUTPUT
-          echo "is-stable=$(test "$CHANNEL" = "stable" && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "is-beta=$(test "$CHANNEL" = "beta" && echo true || echo false)" >> $GITHUB_OUTPUT
 
           # read the flutter.version file to find the flutter hash
           # that we're building for
-          FLUTTER_HASH=$(cat flutter.version.$CHANNEL | tr -dc [:xdigit:])
+          ENGINE_HASH=$(cat flutter.version.$CHANNEL | tr -dc [:xdigit:])
 
-          # Get all (full-qualified) tags that point to the engine commit
-          # e.g. refs/tags/2.10.0-0.0.pre.0
-          REFS=$($GIT_BASECMD ls-remote --tags "$FLUTTER_REPO" "$FLUTTER_HASH" | cut -f2)
-          
-          # Extract the tag names from the full-qualified refs
-          # e.g. 2.10.0-0.0.pre.0
-          TAGS=$(echo "$REFS" | cut -d/ -f3 | sort -V)
-          
-          # Extract the first tag
-          FIRST_TAG=$(echo "$TAGS" | head -n1)
-          
-          # Serialize the tags to JSON
-          TAGS_JSON="$(echo "$TAGS" | jq -ncMR '[inputs]')"
-          
-          echo "first-semver=$FIRST_TAG" >> $GITHUB_OUTPUT
-          echo "flutter-hash=$FLUTTER_HASH" >> $GITHUB_OUTPUT
-          
+          echo "engine-hash=$ENGINE_HASH" >> $GITHUB_OUTPUT
+
           
   populate-engine-src-cache:
     name: 'Prepopulate engine source cache'
@@ -93,7 +111,7 @@ jobs:
         id: cache-lookup
         with:
           path: flutter
-          key: flutter-${{ needs.resolve-version.outputs.hash }}-${{ runner.os }}-${{ runner.arch }}
+          key: flutter-${{ needs.resolve-version.outputs.engine-hash }}-${{ runner.os }}-${{ runner.arch }}
           lookup-only: true
       
       - name: Install depot tools
@@ -141,7 +159,7 @@ jobs:
         env:
           DEPOT_TOOLS_UPDATE: 1
         run: |
-          gclient sync --no-history --shallow --revision .@${{ needs.resolve-version.outputs.semver }} -R -D
+          gclient sync --no-history --shallow --revision .@${{ needs.resolve-version.outputs.engine-ref || needs.resolve-version.outputs.engine-hash }} -R -D
       
       - name: Install linux arm sysroot
         if: steps.cache-lookup.outputs.cache-hit != 'true' && runner.os == 'Linux'
@@ -182,7 +200,7 @@ jobs:
           ZSTD_CLEVEL: 12
         with:
           path: flutter
-          key: flutter-${{ needs.resolve-version.outputs.hash }}-${{ runner.os }}-${{ runner.arch }}
+          key: flutter-${{ needs.resolve-version.outputs.engine-hash }}-${{ runner.os }}-${{ runner.arch }}
   
   load-matrix:
     name: 'Generate build matrix'
@@ -242,8 +260,8 @@ jobs:
 
       - name: Log engine version & Build config
         run: |
-          echo '*** flutter commit hash: ***'
-          echo ${{ needs.resolve-version.outputs.hash }}
+          echo '*** flutter engine hash: ***'
+          echo ${{ needs.resolve-version.outputs.engine-hash }}
           echo '*** flutter version: ***'
           echo ${{ needs.resolve-version.outputs.semver }}
 
@@ -340,7 +358,7 @@ jobs:
           SEGMENT_DOWNLOAD_TIMEOUT_MINS: 10
         with:
           path: flutter
-          key: flutter-${{ needs.resolve-version.outputs.hash }}-${{ runner.os }}-${{ runner.arch }}
+          key: flutter-${{ needs.resolve-version.outputs.engine-hash }}-${{ runner.os }}-${{ runner.arch }}
           fail-on-cache-miss: true
   
       - name: Apply patches
@@ -587,7 +605,7 @@ jobs:
       - name: Log engine version & Build config
         run: |
           echo *** engine version: ***
-          echo ${{ needs.resolve-version.outputs.hash }}
+          echo ${{ needs.resolve-version.outputs.engine-hash }}
           echo '*** config: ***'
           echo artifact name: ${{ matrix.artifact-name }}
 
@@ -1065,9 +1083,10 @@ jobs:
           default_author: github_actions
           cwd: ./engine-binaries
           message: 'update engine binaries for flutter ${{ needs.resolve-version.outputs.semver }}'
-          tag: engine_${{ needs.resolve-version.outputs.hash }} --force
+          tag: engine_${{ needs.resolve-version.outputs.engine-hash }} --force
           tag_push: '--force'
-          push: ${{ startsWith(github.ref, 'refs/tags/flutter/stable/') }}
+          fetch: false
+          push: ${{ needs.resolve-version.outputs.is-stable }}
   
   release:
     name: 'Publish release'
@@ -1092,15 +1111,17 @@ jobs:
           tree -apugshDF
       
       - uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/flutter/')
+        if: ${{ needs.resolve-version.outputs.is-stable == 'true' || needs.resolve-version.outputs.is-beta == 'true' }}
         with:
           name: ${{ needs.resolve-version.outputs.semver }}
           body: |
             | name | info | reference |
             | - | - | - |
             | flutter channel | ${{ needs.resolve-version.outputs.channel }} | |
-            | flutter version | ${{ needs.resolve-version.outputs.semver }} | [flutter/flutter@`${{ needs.resolve-version.outputs.semver }}`](https://github.com/flutter/flutter/tree/${{ needs.resolve-version.outputs.semver }}) |
+            | flutter version | ${{ needs.resolve-version.outputs.semver }} | [flutter/flutter@`${{ needs.resolve-version.outputs.semver || needs.resolve-version.outputs.flutter-hash }}`](https://github.com/flutter/flutter/tree/${{ needs.resolve-version.outputs.semver || needs.resolve-version.outputs.flutter-hash }}) |
+            | engine version | `${{ needs.resolve-version.outputs.engine-ref || needs.resolve-version.outputs.engine-hash }}` | [flutter/flutter@`${{ needs.resolve-version.outputs.engine-ref || needs.resolve-version.outputs.engine-hash }}`](https://github.com/flutter/flutter/tree/${{ needs.resolve-version.outputs.engine-ref || needs.resolve-version.outputs.engine-hash }}) |
           fail_on_unmatched_files: true
           files: |
             release-files/*
-          prerelease: ${{ ! startsWith(github.ref, 'refs/tags/flutter/stable') }}
+          prerelease: ${{ needs.resolve-version.outputs.is-stable != 'true' }}
+
