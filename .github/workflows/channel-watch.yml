@@ -37,6 +37,11 @@ jobs:
           FLUTTER_REPO: "https://github.com/flutter/flutter.git"
         run: |
           set -euo pipefail
+
+          # If debugging is enabled, trace bash commands
+          if ${{ runner.debug && 'true' || 'false' }}; then
+            set -x
+          fi
           
           # First, try to find a /bin/internal/engine.version file in the engine repo.
           ENGINE_HASH=$(curl https://raw.githubusercontent.com/flutter/flutter/refs/heads/${{ matrix.channel }}/bin/internal/engine.version)
@@ -80,6 +85,11 @@ jobs:
       - name: Check if flutter version changed 
         id: check-roll
         run: |
+          # If debugging is enabled, trace bash commands
+          if ${{ runner.debug && 'true' || 'false' }}; then
+            set -x
+          fi
+
           echo "::group::git status"
           git status
           echo "::endgroup::"
@@ -104,15 +114,20 @@ jobs:
       
       - name: Commit & Push
         run: |
+          # If debugging is enabled, trace bash commands
+          if ${{ runner.debug && 'true' || 'false' }}; then
+            set -x
+          fi
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           # If we don't have anything new, this will stage nothing,
           # and we won't push anything.
-          set +x
+          set +e
           git add 'flutter.version.${{ matrix.channel }}'
 
-          git commit <<EOF
+          git commit -F - <<EOF
           Roll Flutter (${{ matrix.channel }})
           
           Update ${{ matrix.channel }} engine version to ${{ steps.resolve.outputs.hash }}
@@ -121,7 +136,10 @@ jobs:
           
           git tag flutter/${{ matrix.channel }}/${{ steps.resolve.outputs.semver }}
           git tag engine/${{ steps.resolve.outputs.hash }}
-          set -x
           
-          git push ${{ startsWith(github.ref, 'refs/pull/') && '--dry-run' || '' }}
-          git push --tags -f ${{ startsWith(github.ref, 'refs/pull/') && '--dry-run' || '' }}
+          if ${{ steps.check-roll.outputs.changed }}; then
+            git push ${{ startsWith(github.ref, 'refs/pull/') && '--dry-run' || '' }}
+            git push --tags ${{ startsWith(github.ref, 'refs/pull/') && '--dry-run' || '' }}
+          fi
+
+          set -e

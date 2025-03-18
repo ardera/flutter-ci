@@ -65,18 +65,23 @@ jobs:
         run: |
           set -euo pipefail
           
+          # If debugging is enabled, trace bash commands
+          if ${{ runner.debug && 'true' || 'false' }}; then
+            set -x
+          fi
+          
           STABLE_REF="$(git tag --points-at HEAD 'flutter/stable/*' | cut -f1 | cut -d/ -f3)"
           BETA_REF="$(git tag --points-at HEAD 'flutter/beta/*' | cut -f1 | cut -d/ -f3)"
           
           if test -n $STABLE_REF; then
             echo "is-stable=true" >> $GITHUB_OUTPUT
             echo "is-beta=false" >> $GITHUB_OUTPUT
-            echo "first-semver=$STABLE_REF"
+            echo "first-semver=$STABLE_REF" >> $GITHUB_OUTPUT
             CHANNEL=stable
           elif test -n $BETA_REF; then
             echo "is-stable=false" >> $GITHUB_OUTPUT
             echo "is-beta=true" >> $GITHUB_OUTPUT
-            echo "first-semver=$BETA_REF"
+            echo "first-semver=$BETA_REF" >> $GITHUB_OUTPUT
             CHANNEL=beta
           else
             echo "Could not determine channel."
