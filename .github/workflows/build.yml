@@ -93,7 +93,7 @@ jobs:
           ENGINE_HASH=$(cat flutter.version.$CHANNEL | tr -dc [:xdigit:])
 
           echo "engine-hash=$ENGINE_HASH" >> $GITHUB_OUTPUT
-
+          
           
   populate-engine-src-cache:
     name: 'Prepopulate engine source cache'
@@ -1142,7 +1142,7 @@ jobs:
           tag: engine_${{ needs.resolve-version.outputs.engine-hash }} --force
           tag_push: '--force'
           fetch: false
-          push: ${{ needs.resolve-version.outputs.is-stable }}
+          push: ${{ needs.resolve-version.outputs.is-stable && !startsWith(github.ref, 'refs/pull') }}
   
   release:
     name: 'Publish release'
@@ -1167,7 +1167,7 @@ jobs:
           tree -apugshDF
       
       - uses: softprops/action-gh-release@v1
-        if: ${{ needs.resolve-version.outputs.is-stable == 'true' || needs.resolve-version.outputs.is-beta == 'true' }}
+        if: ${{ needs.resolve-version.outputs.is-stable == 'true' || needs.resolve-version.outputs.is-beta == 'true'}}
         with:
           name: ${{ needs.resolve-version.outputs.semver }}
           body: |
@@ -1180,4 +1180,5 @@ jobs:
           files: |
             release-files/*
           prerelease: ${{ needs.resolve-version.outputs.is-stable != 'true' }}
+          draft: ${{ startsWith(github.ref, 'refs/pull') }}
 
