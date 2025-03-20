@@ -77,11 +77,18 @@ jobs:
             echo "is-stable=true" >> $GITHUB_OUTPUT
             echo "is-beta=false" >> $GITHUB_OUTPUT
             echo "first-semver=$STABLE_REF" >> $GITHUB_OUTPUT
+            echo "channel=stable" >> $GITHUB_OUTPUT
             CHANNEL=stable
           elif test -n "$BETA_REF"; then
             echo "is-stable=false" >> $GITHUB_OUTPUT
             echo "is-beta=true" >> $GITHUB_OUTPUT
             echo "first-semver=$BETA_REF" >> $GITHUB_OUTPUT
+            echo "channel=beta" >> $GITHUB_OUTPUT
+            CHANNEL=beta
+          elif ${{ startsWith(github.ref, 'refs/pull') && 'true' || 'false' }}; then
+            echo "is-stable=false" >> $GITHUB_OUTPUT
+            echo "is-beta=true" >> $GITHUB_OUTPUT
+            echo "channel=beta" >> $GITHUB_OUTPUT
             CHANNEL=beta
           else
             echo "Could not determine channel."
@@ -93,7 +100,6 @@ jobs:
           ENGINE_HASH=$(cat flutter.version.$CHANNEL | tr -dc [:xdigit:])
 
           echo "engine-hash=$ENGINE_HASH" >> $GITHUB_OUTPUT
-          
           
   populate-engine-src-cache:
     name: 'Prepopulate engine source cache'
