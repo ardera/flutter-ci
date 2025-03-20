@@ -1,14 +1,14 @@
-From 5566c70bfca23c97becf47d73c49f0deec2c6e98 Mon Sep 17 00:00:00 2001
+From 04c95c00fe3cd5752a8b18611e8191e554b1ed16 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Sun, 24 Mar 2024 19:26:18 +0000
-Subject: [PATCH 4/5] build all gen_snapshots by default
+Subject: [PATCH 4/8] build all gen_snapshots by default
 
 ---
  engine/src/flutter/BUILD.gn | 6 ++++++
  1 file changed, 6 insertions(+)
 
 diff --git a/engine/src/flutter/BUILD.gn b/engine/src/flutter/BUILD.gn
-index b5720381d1..aee34b39aa 100644
+index b572038..aee34b3 100644
 --- a/engine/src/flutter/BUILD.gn
 +++ b/engine/src/flutter/BUILD.gn
 @@ -96,6 +96,12 @@ group("flutter") {
@@ -25,5 +25,5 @@ index b5720381d1..aee34b39aa 100644
        public_deps += [
          "//flutter/build/dart:dart_sdk",
 -- 
-2.47.1
+2.34.1
 

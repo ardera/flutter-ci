@@ -1,0 +1,65 @@
+From 11aee412b24e8671911aefcf01bd28edc2970fdd Mon Sep 17 00:00:00 2001
+From: Alexey Pavlyutkin <92360856+apavlyutkin@users.noreply.github.com>
+Date: Wed, 6 Nov 2024 11:30:17 -0800
+Subject: [PATCH 1/2] PR #1783: [riscv][debugging] Fix a few warnings in RISC-V
+ inlines
+
+Imported from GitHub PR https://github.com/abseil/abseil-cpp/pull/1783
+
+Today we cannot build V8 (which uses the Abseil library) in strict mode for RISC-V due to a few warnings in debbugging inlines. All the warnings are about implicit signed to unsigned conversion and precision losses, nothing serious, but they are still very annoying.
+
+Merge 7b2a865021ca18e3666c544000b6b1258964f6c4 into 8596c6e7f5fc64bf6c5fd538fb024d9139a880ad
+
+Merging this change closes #1783
+
+COPYBARA_INTEGRATE_REVIEW=https://github.com/abseil/abseil-cpp/pull/1783 from apavlyutkin:riscv-fix-warnings 7b2a865021ca18e3666c544000b6b1258964f6c4
+PiperOrigin-RevId: 693802454
+Change-Id: Ibfefc9370606a6b8ec217ac6d87d7c6d70d1a3ce
+---
+ absl/debugging/internal/stacktrace_riscv-inl.inc | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/absl/debugging/internal/stacktrace_riscv-inl.inc b/absl/debugging/internal/stacktrace_riscv-inl.inc
+index 20183fa3..528ef707 100644
+--- a/absl/debugging/internal/stacktrace_riscv-inl.inc
++++ b/absl/debugging/internal/stacktrace_riscv-inl.inc
+@@ -36,12 +36,12 @@
+ #include "absl/base/attributes.h"
+ #include "absl/debugging/stacktrace.h"
+ 
+-static const uintptr_t kUnknownFrameSize = 0;
++static constexpr ptrdiff_t kUnknownFrameSize = 0;
+ 
+ // Compute the size of a stack frame in [low..high).  We assume that low < high.
+ // Return size of kUnknownFrameSize.
+ template <typename T>
+-static inline uintptr_t ComputeStackFrameSize(const T *low, const T *high) {
++static inline ptrdiff_t ComputeStackFrameSize(const T *low, const T *high) {
+   const char *low_char_ptr = reinterpret_cast<const char *>(low);
+   const char *high_char_ptr = reinterpret_cast<const char *>(high);
+   return low < high ? high_char_ptr - low_char_ptr : kUnknownFrameSize;
+@@ -93,8 +93,8 @@ static void ** NextStackFrame(void **old_frame_pointer, const void *uc,
+ 
+   // Check frame size.  In strict mode, we assume frames to be under 100,000
+   // bytes.  In non-strict mode, we relax the limit to 1MB.
+-  const uintptr_t max_size = STRICT_UNWINDING ? 100000 : 1000000;
+-  const uintptr_t frame_size =
++  const ptrdiff_t max_size = STRICT_UNWINDING ? 100000 : 1000000;
++  const ptrdiff_t frame_size =
+       ComputeStackFrameSize(old_frame_pointer, new_frame_pointer);
+   if (frame_size == kUnknownFrameSize) {
+     if (STRICT_UNWINDING)
+@@ -151,7 +151,9 @@ static int UnwindImpl(void **result, int *sizes, int max_depth, int skip_count,
+     } else {
+       result[n] = return_address;
+       if (IS_STACK_FRAMES) {
+-        sizes[n] = ComputeStackFrameSize(frame_pointer, next_frame_pointer);
++        // NextStackFrame() has already checked that frame size fits to int
++        sizes[n] = static_cast<int>(ComputeStackFrameSize(frame_pointer,
++                                                          next_frame_pointer));
+       }
+       n++;
+     }
+-- 
+2.34.1
+

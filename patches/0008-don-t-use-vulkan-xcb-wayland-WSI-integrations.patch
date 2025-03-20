@@ -1,0 +1,25 @@
+From f5b0edb915917ce78fffb208be7941b769c17eca Mon Sep 17 00:00:00 2001
+From: Hannes Winkler <hanneswinkler2000@web.de>
+Date: Mon, 20 Jan 2025 16:23:24 +0000
+Subject: [PATCH 8/8] don't use vulkan xcb/wayland WSI integrations
+
+---
+ engine/src/flutter/build_overrides/vulkan_headers.gni | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/engine/src/flutter/build_overrides/vulkan_headers.gni b/engine/src/flutter/build_overrides/vulkan_headers.gni
+index 5efa852..bd1868b 100644
+--- a/engine/src/flutter/build_overrides/vulkan_headers.gni
++++ b/engine/src/flutter/build_overrides/vulkan_headers.gni
+@@ -6,6 +6,6 @@
+ # set anything.
+ 
+ if (is_linux) {
+-  vulkan_use_x11 = true
+-  vulkan_use_wayland = true
++  vulkan_use_x11 = false
++  vulkan_use_wayland = false
+ }
+-- 
+2.34.1
+

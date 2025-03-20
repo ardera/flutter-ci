@@ -1,0 +1,91 @@
+From be966bd75b13d06f8d81759a43c5db0e590e2ee8 Mon Sep 17 00:00:00 2001
+From: Hannes Winkler <hanneswinkler2000@web.de>
+Date: Wed, 22 Jan 2025 13:55:47 +0100
+Subject: [PATCH 9/9] fix windows -> linux riscv64 gen_snapshot build
+
+---
+ engine/src/build/toolchain/win/BUILD.gn | 34 ++++++++++++-------------
+ engine/src/flutter/tools/gn             | 11 +++++---
+ 2 files changed, 25 insertions(+), 20 deletions(-)
+
+diff --git a/engine/src/build/toolchain/win/BUILD.gn b/engine/src/build/toolchain/win/BUILD.gn
+index 006c80560a..c89c70e754 100644
+--- a/engine/src/build/toolchain/win/BUILD.gn
++++ b/engine/src/build/toolchain/win/BUILD.gn
+@@ -296,34 +296,34 @@ template("win_toolchains") {
+   }
+ }
+ 
+-if (target_cpu == "x86") {
++# It's not clear whether its safe to unconditionally
++# define all the toolchains together.
++#
++# Some older code comment indicated x86 and x64 will conflict,
++# because they copy files into the same location,
++# but could be that's outdated. For arm64 cross builds, arm64
++# and x64 are both loaded even in upstream, fwiw.
++#
++# So for now, just check if anything (host or default toolchain) is
++# targeting x86/x64 and only then define the toolchain, which is close
++# enough to the upstream flutter behaviour and makes RISC-V work.
++if (target_cpu == "x86" || host_cpu == "x86") {
+   win_toolchains("x86") {
+     toolchain_arch = "x86"
+   }
+ }
+ 
+-if (target_cpu == "x64") {
++if (target_cpu == "x64" || host_cpu == "x64") {
+   win_toolchains("x64") {
+     toolchain_arch = "x64"
+   }
+ }
+ 
+-if (target_cpu == "arm") {
+-  # When the target cpu is "arm", we use the 32-bit intel toolchain "x86".
+-  win_toolchains("x86") {
+-    toolchain_arch = "x86"
+-  }
+-}
+-
+-if (target_cpu == "arm64") {
++# Here, the (target_cpu == "arm64" || host_cpu == "arm64") guard
++# is required because win_toolchain_data.gni will only resolve
++# win_toolchain_data_arm64 if either host or target is arm64.
++if (target_cpu == "arm64" || host_cpu == "arm64") {
+   win_toolchains("arm64") {
+     toolchain_arch = "arm64"
+   }
+-
+-  # Cross-compilation support for x64 hosts.
+-  if (host_cpu != "arm64") {
+-    win_toolchains(host_cpu) {
+-      toolchain_arch = host_cpu
+-    }
+-  }
+ }
+diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
+index c645626912..7ea0a50082 100755
+--- a/engine/src/flutter/tools/gn
++++ b/engine/src/flutter/tools/gn
+@@ -502,9 +502,14 @@ def to_gn_args(args):
+   # does not exist. Further, we set the 'host_cpu' so that it shares the
+   # bitwidth of the 32-bit arm target.
+   if sys.platform.startswith(
+-      ('cygwin', 'win')) and (args.target_os == 'android' or args.target_os == "linux") and gn_args['target_cpu'] == 'arm':
+-    gn_args['host_cpu'] = 'x86'
+-    gn_args['current_cpu'] = 'x86'
++      ('cygwin', 'win')) and (args.target_os == 'android' or args.target_os == "linux") and (gn_args['target_cpu'] == 'arm' or gn_args['target_cpu'] == 'riscv64'):
++    # We (== gen_snapshot) need 64-bit x86 to cross compile to 64-bit RISC-V.
++    if gn_args['target_cpu'] == 'riscv64':
++      gn_args['host_cpu'] = 'x64'
++      gn_args['current_cpu'] = 'x64'
++    else:
++      gn_args['host_cpu'] = 'x86'
++      gn_args['current_cpu'] = 'x86'
+ 
+   if gn_args['target_os'] == 'ios' or get_host_os() == 'mac':
+     if gn_args['target_os'] == 'ios':
+-- 
+2.30.0.windows.2
+

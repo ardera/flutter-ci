@@ -60,7 +60,8 @@ void main() {
           'pi4-64',
           'armv7-generic',
           'aarch64-generic',
-          'x64-generic'
+          'x64-generic',
+          'riscv64-generic',
         ]) ...[
           allOf(
             containsPair('artifact-name', artifact),
@@ -84,7 +85,8 @@ void main() {
         for (final artifact in [
           'armv7-generic',
           'aarch64-generic',
-          'x64-generic'
+          'x64-generic',
+          'riscv64-generic',
         ]) ...[
           allOf(
             containsPair('artifact-name', artifact),
@@ -112,7 +114,8 @@ void main() {
         for (final artifact in [
           'armv7-generic',
           'aarch64-generic',
-          'x64-generic'
+          'x64-generic',
+          'riscv64-generic',
         ]) ...[
           allOf(
             containsPair('artifact-name', artifact),
@@ -145,6 +148,7 @@ void main() {
           'armv7-generic',
           'aarch64-generic',
           'x64-generic',
+          'riscv64-generic',
         ])
           for (final runtimeMode in ['release', 'profile'])
             for (final os in ['macos-13', 'ubuntu-latest'])
@@ -194,6 +198,7 @@ void main() {
           'armv7-generic',
           'aarch64-generic',
           'x64-generic',
+          'riscv64-generic',
           'pi3',
           'pi3-64',
           'pi4',
@@ -311,6 +316,17 @@ void main() {
     );
   });
 
+  test('any riscv64 host gen_snapshot build job is present', () {
+    final matrix = generateMatrix();
+
+    expect(
+      matrix,
+      anyElement(
+        containsPair('build-riscv64-gen-snapshot', true),
+      ),
+    );
+  });
+
   test('every job has a known runner image set', () {
     final matrix = generateMatrix();
 
@@ -339,6 +355,20 @@ void main() {
           ),
         ),
       ),
+    );
+  });
+
+  test('every arch is present', () {
+    final matrix = generateMatrix();
+
+    expect(
+      matrix,
+      allOf([
+        for (final arch in ['arm', 'arm64', 'x64', 'riscv64'])
+          anyElement(
+            containsPair('cpu', arch)
+          )
+      ])
     );
   });
 }

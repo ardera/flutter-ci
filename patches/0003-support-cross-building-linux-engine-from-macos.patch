@@ -1,7 +1,7 @@
-From 7678b80b17257c393928c95e3836a29ddc057e15 Mon Sep 17 00:00:00 2001
+From 219348cc25e957074883405b54bbc975f8e92d44 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Thu, 9 Nov 2023 15:04:30 +0100
-Subject: [PATCH 3/5] support cross-building linux engine from macos
+Subject: [PATCH 3/8] support cross-building linux engine from macos
 
 engine/src/build/config/BUILDCONFIG.gn:
 Use mac toolchain when building for linux
@@ -24,7 +24,7 @@ linux embedder: always depend on `libflutter_linux_gtk.so` instead of
  5 files changed, 24 insertions(+), 16 deletions(-)
 
 diff --git a/engine/src/build/config/BUILDCONFIG.gn b/engine/src/build/config/BUILDCONFIG.gn
-index b74b2e2373..b54e51596e 100644
+index b74b2e2..b54e515 100644
 --- a/engine/src/build/config/BUILDCONFIG.gn
 +++ b/engine/src/build/config/BUILDCONFIG.gn
 @@ -552,16 +552,20 @@ if (custom_toolchain != "") {
@@ -54,7 +54,7 @@ index b74b2e2373..b54e51596e 100644
    host_toolchain = "//build/toolchain/mac:clang_$host_cpu"
    set_default_toolchain("//build/toolchain/mac:clang_$current_cpu")
 diff --git a/engine/src/build/linux/sysroot_scripts/install-sysroot.py b/engine/src/build/linux/sysroot_scripts/install-sysroot.py
-index d3e76649e6..6dfbe4263d 100755
+index d3e7664..6dfbe42 100755
 --- a/engine/src/build/linux/sysroot_scripts/install-sysroot.py
 +++ b/engine/src/build/linux/sysroot_scripts/install-sysroot.py
 @@ -77,7 +77,7 @@ def main(args):
@@ -67,7 +67,7 @@ index d3e76649e6..6dfbe4263d 100755
  
    if options.print_hash:
 diff --git a/engine/src/build/toolchain/linux/BUILD.gn b/engine/src/build/toolchain/linux/BUILD.gn
-index 3d603a0bc2..9995952143 100644
+index 3d603a0..9995952 100644
 --- a/engine/src/build/toolchain/linux/BUILD.gn
 +++ b/engine/src/build/toolchain/linux/BUILD.gn
 @@ -33,14 +33,18 @@ if (use_rbe) {
@@ -95,10 +95,10 @@ index 3d603a0bc2..9995952143 100644
    prefix = "arm-linux-gnueabihf-"
    if (toolchain_prefix != "") {
 diff --git a/engine/src/flutter/shell/platform/linux/BUILD.gn b/engine/src/flutter/shell/platform/linux/BUILD.gn
-index ba44674089..520659a3c4 100644
+index 3ef0b71..07f4434 100644
 --- a/engine/src/flutter/shell/platform/linux/BUILD.gn
 +++ b/engine/src/flutter/shell/platform/linux/BUILD.gn
-@@ -331,8 +331,8 @@ zip_bundle("flutter_gtk") {
+@@ -329,8 +329,8 @@ zip_bundle("flutter_gtk") {
    }
    tmp_files += [
      {
@@ -110,7 +110,7 @@ index ba44674089..520659a3c4 100644
      {
        source = "$root_build_dir/gen_snapshot"
 diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
-index 325b5cbece..51173f3a3d 100755
+index 325b5cb..51173f3 100755
 --- a/engine/src/flutter/tools/gn
 +++ b/engine/src/flutter/tools/gn
 @@ -94,8 +94,8 @@ def is_host_build(args):
@@ -134,5 +134,5 @@ index 325b5cbece..51173f3a3d 100755
      # This is not necessarily needed but enabling this until we have a way to
      # build a macOS metal only shell and a gl only shell.
 -- 
-2.47.1
+2.34.1
 
