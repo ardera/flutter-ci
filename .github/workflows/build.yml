@@ -56,6 +56,9 @@ jobs:
       is-beta: ${{ steps.resolve.outputs.is-beta }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
 
       - name: Resolve flutter hash & SDK version
         id: resolve
