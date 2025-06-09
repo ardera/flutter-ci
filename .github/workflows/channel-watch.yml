@@ -44,7 +44,7 @@ jobs:
           fi
           
           # First, try to find a /bin/internal/engine.version file in the engine repo.
-          ENGINE_HASH=$(curl https://raw.githubusercontent.com/flutter/flutter/refs/heads/${{ matrix.channel }}/bin/internal/engine.version)
+          ENGINE_HASH=$(curl --fail https://raw.githubusercontent.com/flutter/flutter/refs/heads/${{ matrix.channel }}/bin/internal/engine.version)
           
           # Also, get the current commit of refs/heads/stable for the flutter repo.
           #
@@ -62,15 +62,20 @@ jobs:
           # Get all (full-qualified) tags that point to the engine commit
           # e.g. refs/tags/2.10.0-0.0.pre.0
 
+          # Don't put the git ls-remote in the `set +e` block, because it may fail
+          # for rate limiting reasons, and we want to fail the workflow in that case.
+          ALL_REFS=$($GIT_BASECMD ls-remote --refs --tags "$FLUTTER_REPO" "refs/tags/*")
+          
+          # grep returns 0 if it finds a match, 1 if it doesn't.
           set +e
-          REFS=$($GIT_BASECMD ls-remote --exit-code --refs --tags "$FLUTTER_REPO" "refs/tags/*" | grep "$FLUTTER_HASH")
-          FOUND_REF=$?
+          MATCHING_REFS=$(grep "$FLUTTER_HASH" <<< "$ALL_REFS")
+          FOUND_MATCHING_REFS=$?
           set -e
 
-          if test $FOUND_REF -eq 0; then
+          if test $FOUND_MATCHING_REFS -eq 0; then
             # Extract the tag names from the full-qualified refs
             # e.g. 2.10.0-0.0.pre.0
-            TAGS=$(echo "$REFS" | cut -f2 | cut -d/ -f3 | sort -V)
+            TAGS=$(echo "$MATCHING_REFS" | cut -f2 | cut -d/ -f3 | sort -V)
             FIRST_TAG=$(head -n1 <<< "$TAGS")
 
             # Extract the first tag
