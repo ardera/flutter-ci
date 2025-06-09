@@ -1,7 +1,7 @@
-From 93eb1f5d49537a445f3f2a7fad5ec2417aa712a6 Mon Sep 17 00:00:00 2001
+From 22261150dcb31a354242c637d465de5fa00963ba Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Tue, 21 May 2024 19:37:26 +0200
-Subject: [PATCH 5/8] support cross-building linux engine from windows
+Subject: [PATCH 5/9] support cross-building linux engine from windows
 
 (partially, only enough to be able to build gen_snapshot)
 ---
@@ -10,7 +10,7 @@ Subject: [PATCH 5/8] support cross-building linux engine from windows
  2 files changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/engine/src/build/config/BUILDCONFIG.gn b/engine/src/build/config/BUILDCONFIG.gn
-index b54e515..2ddd948 100644
+index b54e51596e..2ddd948fc0 100644
 --- a/engine/src/build/config/BUILDCONFIG.gn
 +++ b/engine/src/build/config/BUILDCONFIG.gn
 @@ -560,6 +560,8 @@ if (custom_toolchain != "") {
@@ -23,7 +23,7 @@ index b54e515..2ddd948 100644
    if (is_clang) {
      set_default_toolchain("//build/toolchain/linux:clang_$current_cpu")
 diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
-index 51173f3..0c48252 100755
+index e1b08a72ee..d0725275cc 100755
 --- a/engine/src/flutter/tools/gn
 +++ b/engine/src/flutter/tools/gn
 @@ -502,7 +502,7 @@ def to_gn_args(args):
@@ -35,7 +35,7 @@ index 51173f3..0c48252 100755
      gn_args['host_cpu'] = 'x86'
      gn_args['current_cpu'] = 'x86'
  
-@@ -730,7 +730,7 @@ def to_gn_args(args):
+@@ -743,7 +743,7 @@ def to_gn_args(args):
    # gen_snapshot, but the build defines otherwise make it look like the build is
    # for a host Windows build and make GN think we will be building ANGLE.
    # Angle is not used on Mac hosts as there are no tests for the OpenGL backend.
@@ -45,5 +45,5 @@ index 51173f3..0c48252 100755
      gn_args['angle_enable_commit_id'] = False
      # Do not build unnecessary parts of the ANGLE tree.
 -- 
-2.34.1
+2.47.1
 

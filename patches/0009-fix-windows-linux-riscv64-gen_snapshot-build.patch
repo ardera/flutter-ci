@@ -1,4 +1,4 @@
-From be966bd75b13d06f8d81759a43c5db0e590e2ee8 Mon Sep 17 00:00:00 2001
+From d8b14a1c5b2275b87c2b2b8a3440c6a4ecacefd6 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Wed, 22 Jan 2025 13:55:47 +0100
 Subject: [PATCH 9/9] fix windows -> linux riscv64 gen_snapshot build
@@ -65,7 +65,7 @@ index 006c80560a..c89c70e754 100644
 -  }
  }
 diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
-index c645626912..7ea0a50082 100755
+index 804b88eb33..20f8f3568f 100755
 --- a/engine/src/flutter/tools/gn
 +++ b/engine/src/flutter/tools/gn
 @@ -502,9 +502,14 @@ def to_gn_args(args):
@@ -87,5 +87,5 @@ index c645626912..7ea0a50082 100755
    if gn_args['target_os'] == 'ios' or get_host_os() == 'mac':
      if gn_args['target_os'] == 'ios':
 -- 
-2.30.0.windows.2
+2.47.1
 
