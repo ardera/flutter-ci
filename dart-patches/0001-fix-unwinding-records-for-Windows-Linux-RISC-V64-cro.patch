@@ -1,0 +1,58 @@
+From b7b88e8c7d3e6b8460e94f58232a7f87245bd885 Mon Sep 17 00:00:00 2001
+From: Hannes Winkler <hanneswinkler2000@web.de>
+Date: Thu, 12 Jun 2025 18:50:33 +0200
+Subject: [PATCH] fix: unwinding records for Windows -> Linux RISC-V64
+ cross-build
+
+According to comments, unwinding records are not used for gen_snapshot.
+So we implement them similar to how they're implemented for unsupported
+platforms, as no-ops.
+---
+ runtime/platform/unwinding_records_win.cc | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/runtime/platform/unwinding_records_win.cc b/runtime/platform/unwinding_records_win.cc
+index 6f9c6dc4442..c8de6e1d5ab 100644
+--- a/runtime/platform/unwinding_records_win.cc
++++ b/runtime/platform/unwinding_records_win.cc
+@@ -16,6 +16,9 @@ namespace dart {
+ const intptr_t kReservedUnwindingRecordsSizeBytes = 64;
+ #elif defined(TARGET_ARCH_ARM64)
+ const intptr_t kReservedUnwindingRecordsSizeBytes = 4 * KB;
++#elif defined(TARGET_ARCH_RISCV64)
++// Same as what "unwinding_records.cc" falls back to on unsupported platforms.
++const intptr_t kReservedUnwindingRecordsSizeBytes = 0;
+ #else
+ #error Unhandled Windows architecture.
+ #endif
+@@ -31,6 +34,18 @@ intptr_t UnwindingRecordsPlatform::SizeInBytes() {
+ #if defined(DART_HOST_OS_WINDOWS) && defined(ARCH_IS_64_BIT) &&                \
+     (!defined(DART_PRECOMPILER) || defined(TESTING))
+ 
++#if defined(TARGET_ARCH_RISCV64)
++
++// Same as what "unwinding_records.cc" falls back to on unsupported platforms.
++
++void UnwindingRecordsPlatform::RegisterExecutableMemory(
++  void* start,
++  intptr_t size,
++  void** pp_dynamic_table) {}
++void UnwindingRecordsPlatform::UnregisterDynamicTable(void* p_dynamic_table) {}
++
++#else
++
+ void UnwindingRecordsPlatform::RegisterExecutableMemory(
+     void* start,
+     intptr_t size,
+@@ -58,6 +73,8 @@ void UnwindingRecordsPlatform::UnregisterDynamicTable(void* p_dynamic_table) {
+   RtlDeleteGrowableFunctionTable(p_dynamic_table);
+ }
+ 
++#endif  // defined(TARGET_ARCH_RISCV64) ...
++
+ #endif  // defined(DART_HOST_OS_WINDOWS) ...
+ 
+ }  // namespace dart
+-- 
+2.30.0.windows.2
+
