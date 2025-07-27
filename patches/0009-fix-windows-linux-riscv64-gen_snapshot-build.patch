@@ -1,7 +1,7 @@
-From d8b14a1c5b2275b87c2b2b8a3440c6a4ecacefd6 Mon Sep 17 00:00:00 2001
+From 967f9b2cabb92a440f5af5343799f6298d4d0347 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Wed, 22 Jan 2025 13:55:47 +0100
-Subject: [PATCH 9/9] fix windows -> linux riscv64 gen_snapshot build
+Subject: [PATCH 09/10] fix windows -> linux riscv64 gen_snapshot build
 
 ---
  engine/src/build/toolchain/win/BUILD.gn | 34 ++++++++++++-------------
@@ -9,7 +9,7 @@ Subject: [PATCH 9/9] fix windows -> linux riscv64 gen_snapshot build
  2 files changed, 25 insertions(+), 20 deletions(-)
 
 diff --git a/engine/src/build/toolchain/win/BUILD.gn b/engine/src/build/toolchain/win/BUILD.gn
-index 006c80560a..c89c70e754 100644
+index 006c80560af..c89c70e7546 100644
 --- a/engine/src/build/toolchain/win/BUILD.gn
 +++ b/engine/src/build/toolchain/win/BUILD.gn
 @@ -296,34 +296,34 @@ template("win_toolchains") {
@@ -65,7 +65,7 @@ index 006c80560a..c89c70e754 100644
 -  }
  }
 diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
-index 804b88eb33..20f8f3568f 100755
+index 804b88eb334..20f8f3568fe 100755
 --- a/engine/src/flutter/tools/gn
 +++ b/engine/src/flutter/tools/gn
 @@ -502,9 +502,14 @@ def to_gn_args(args):
@@ -87,5 +87,5 @@ index 804b88eb33..20f8f3568f 100755
    if gn_args['target_os'] == 'ios' or get_host_os() == 'mac':
      if gn_args['target_os'] == 'ios':
 -- 
-2.47.1
+2.50.1.windows.1
 

@@ -1,14 +1,14 @@
-From 099ec7ac8f613ad3a72d32088d00146767cc9ed4 Mon Sep 17 00:00:00 2001
+From 8ecbf367aa09895a288afba0462d4caf3a228628 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Mon, 20 Jan 2025 16:23:24 +0000
-Subject: [PATCH 8/9] don't use vulkan xcb/wayland WSI integrations
+Subject: [PATCH 08/10] don't use vulkan xcb/wayland WSI integrations
 
 ---
  engine/src/build_overrides/vulkan_headers.gni | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/engine/src/build_overrides/vulkan_headers.gni b/engine/src/build_overrides/vulkan_headers.gni
-index 5efa852344..bd1868b21b 100644
+index 5efa8523449..bd1868b21b9 100644
 --- a/engine/src/build_overrides/vulkan_headers.gni
 +++ b/engine/src/build_overrides/vulkan_headers.gni
 @@ -6,6 +6,6 @@
@@ -21,5 +21,5 @@ index 5efa852344..bd1868b21b 100644
 +  vulkan_use_wayland = false
  }
 -- 
-2.47.1
+2.50.1.windows.1
 

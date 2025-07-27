@@ -1,14 +1,14 @@
-From 9cf5d2de5195869b7989b249ed53fa7d41463856 Mon Sep 17 00:00:00 2001
+From aa5fdc0e89c973cbbebc99a5466d8c3c5a81bb1e Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Mon, 20 Jan 2025 15:42:05 +0000
-Subject: [PATCH 7/9] don't look for freetype2
+Subject: [PATCH 07/10] don't look for freetype2
 
 ---
  engine/src/build/config/linux/BUILD.gn | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/engine/src/build/config/linux/BUILD.gn b/engine/src/build/config/linux/BUILD.gn
-index b3ca1871bd..734510a0bc 100644
+index b3ca1871bd5..734510a0bc4 100644
 --- a/engine/src/build/config/linux/BUILD.gn
 +++ b/engine/src/build/config/linux/BUILD.gn
 @@ -27,9 +27,9 @@ config("fontconfig") {
@@ -25,5 +25,5 @@ index b3ca1871bd..734510a0bc 100644
  config("x11") {
    libs = [
 -- 
-2.47.1
+2.50.1.windows.1
 

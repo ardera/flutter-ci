@@ -1,7 +1,7 @@
-From 0688c248f1b637def86e24817007307cad688f2a Mon Sep 17 00:00:00 2001
+From 937b524a401212bfac5d1c902873ea2e28ac4664 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Thu, 22 Jun 2023 16:30:00 +0000
-Subject: [PATCH 2/9] always include debug symbols
+Subject: [PATCH 02/10] always include debug symbols
 
 Always build with `-ggdb -fdebug-default-version=4` by default.
 Symbols are stripped later anyway and they're still useful for debugging.
@@ -10,7 +10,7 @@ Symbols are stripped later anyway and they're still useful for debugging.
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
-index 402ed5da18..ca2cd91bb9 100644
+index 402ed5da180..ca2cd91bb9d 100644
 --- a/engine/src/build/config/compiler/BUILD.gn
 +++ b/engine/src/build/config/compiler/BUILD.gn
 @@ -1034,7 +1034,7 @@ config("symbols") {
@@ -39,5 +39,5 @@ index 402ed5da18..ca2cd91bb9 100644
  }
  
 -- 
-2.47.1
+2.50.1.windows.1
 
