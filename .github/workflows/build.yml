@@ -436,6 +436,48 @@ jobs:
         timeout-minutes: 5
         run: |
           ./install-sysroot.py --arch=${{ matrix.cpu == 'x64' && 'amd64' || matrix.cpu }}
+      
+      - name: Download Windows VC++ 14.42 toolset
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Download the VC++ 14.42 toolset for Windows.
+          # By default, the latest version is used, and versions 14.44 and above
+          # required Clang 19; while the engine only comes with Clang 18.
+          #
+          # Partially inspired by:
+          #   https://github.com/actions/runner-images/blob/main/images/windows/scripts/helpers/VisualStudioHelpers.ps1
+          
+          $InstallPath = 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise'
+          $BootstrapperPath = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe'
+
+          # Components to ADD
+          $AddComponents = @(
+              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM',
+              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM.Spectre',
+              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM64',
+              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM64.Spectre',
+              'Microsoft.VisualStudio.Component.VC.14.42.17.12.x86.x64',
+              'Microsoft.VisualStudio.Component.VC.14.42.17.12.x86.x64.Spectre'
+          )
+
+          # Create response JSON
+          $response = @{
+              installPath = $InstallPath
+              add         = $AddComponents
+          }
+          $responseFilePath = "$env:TEMP\vs_modify_response.json"
+          $response | ConvertTo-Json -Depth 3 | Out-File -FilePath $responseFilePath -Encoding UTF8
+
+          # Run bootstrapper with response file
+          $Arguments = (
+              'modify',
+              '--in', $responseFilePath,
+              '--quiet', '--nocache', '--norestart'
+          )
+
+          Write-Host "Modifying Visual Studio installation at: $InstallPath"
+          Start-Process -FilePath $BootstrapperPath -ArgumentList $Arguments -Wait -PassThru
 
       - name: Configure engine
         working-directory: flutter/engine/src
@@ -452,6 +494,7 @@ jobs:
             --no-build-embedder-examples \
             --no-enable-unittests \
             --no-goma \
+            --gn-args 'vc_version="14.42"' \
             ${{ matrix.unoptimized && '--unoptimized' || ''}} \
             ${{ matrix.nostripped && '--no-stripped' || ''}} \
             ${{ matrix.arm-cpu && format('--gn-args ''arm_cpu="{0}"''', matrix.arm-cpu) || '' }} \
