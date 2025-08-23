@@ -1,7 +1,7 @@
-From 967f9b2cabb92a440f5af5343799f6298d4d0347 Mon Sep 17 00:00:00 2001
+From 52b600d335aa95f3aa22a28d4fa70e1a4be6c903 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Wed, 22 Jan 2025 13:55:47 +0100
-Subject: [PATCH 09/10] fix windows -> linux riscv64 gen_snapshot build
+Subject: [PATCH 9/9] fix windows -> linux riscv64 gen_snapshot build
 
 ---
  engine/src/build/toolchain/win/BUILD.gn | 34 ++++++++++++-------------
@@ -65,10 +65,10 @@ index 006c80560af..c89c70e7546 100644
 -  }
  }
 diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
-index 804b88eb334..20f8f3568fe 100755
+index 9bc3d47e284..6f6df7890a4 100755
 --- a/engine/src/flutter/tools/gn
 +++ b/engine/src/flutter/tools/gn
-@@ -502,9 +502,14 @@ def to_gn_args(args):
+@@ -518,9 +518,14 @@ def to_gn_args(args):
    # does not exist. Further, we set the 'host_cpu' so that it shares the
    # bitwidth of the 32-bit arm target.
    if sys.platform.startswith(
@@ -87,5 +87,5 @@ index 804b88eb334..20f8f3568fe 100755
    if gn_args['target_os'] == 'ios' or get_host_os() == 'mac':
      if gn_args['target_os'] == 'ios':
 -- 
-2.50.1.windows.1
+2.48.1
 

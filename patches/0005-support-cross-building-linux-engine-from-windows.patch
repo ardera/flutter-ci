@@ -1,7 +1,7 @@
-From 08f47e3cbd690cbc1f4e6df4c566d35a14ed7346 Mon Sep 17 00:00:00 2001
+From 7ff3915b8734d2d382606718903d22dd95a77caf Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Tue, 21 May 2024 19:37:26 +0200
-Subject: [PATCH 05/10] support cross-building linux engine from windows
+Subject: [PATCH 5/9] support cross-building linux engine from windows
 
 (partially, only enough to be able to build gen_snapshot)
 ---
@@ -10,10 +10,10 @@ Subject: [PATCH 05/10] support cross-building linux engine from windows
  2 files changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/engine/src/build/config/BUILDCONFIG.gn b/engine/src/build/config/BUILDCONFIG.gn
-index b54e51596e4..2ddd948fc0d 100644
+index 753083c6267..ad603377322 100644
 --- a/engine/src/build/config/BUILDCONFIG.gn
 +++ b/engine/src/build/config/BUILDCONFIG.gn
-@@ -560,6 +560,8 @@ if (custom_toolchain != "") {
+@@ -585,6 +585,8 @@ if (custom_toolchain != "") {
      }
    } else if (host_os == "mac") {
      host_toolchain = "//build/toolchain/mac:clang_$host_cpu"
@@ -23,10 +23,10 @@ index b54e51596e4..2ddd948fc0d 100644
    if (is_clang) {
      set_default_toolchain("//build/toolchain/linux:clang_$current_cpu")
 diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
-index e1b08a72ee7..d0725275cc8 100755
+index 0ed19bda3ca..a97f35fbdd4 100755
 --- a/engine/src/flutter/tools/gn
 +++ b/engine/src/flutter/tools/gn
-@@ -502,7 +502,7 @@ def to_gn_args(args):
+@@ -518,7 +518,7 @@ def to_gn_args(args):
    # does not exist. Further, we set the 'host_cpu' so that it shares the
    # bitwidth of the 32-bit arm target.
    if sys.platform.startswith(
@@ -35,7 +35,7 @@ index e1b08a72ee7..d0725275cc8 100755
      gn_args['host_cpu'] = 'x86'
      gn_args['current_cpu'] = 'x86'
  
-@@ -743,7 +743,7 @@ def to_gn_args(args):
+@@ -771,7 +771,7 @@ def to_gn_args(args):
    # gen_snapshot, but the build defines otherwise make it look like the build is
    # for a host Windows build and make GN think we will be building ANGLE.
    # Angle is not used on Mac hosts as there are no tests for the OpenGL backend.
@@ -45,5 +45,5 @@ index e1b08a72ee7..d0725275cc8 100755
      gn_args['angle_enable_commit_id'] = False
      # Do not build unnecessary parts of the ANGLE tree.
 -- 
-2.50.1.windows.1
+2.48.1
 

@@ -1,7 +1,7 @@
-From e794912dd6309c7f079d45a99f4d45c989a95388 Mon Sep 17 00:00:00 2001
+From 5519d929014f7e8d005588caf1228ec4bfd6258e Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Wed, 11 Aug 2021 02:21:25 +0200
-Subject: [PATCH 01/10] fix armv7 build - make arm64 tune work
+Subject: [PATCH 1/9] fix armv7 build - make arm64 tune work
 
 ---
  engine/src/build/config/arm.gni           | 27 ++-----
@@ -57,7 +57,7 @@ index 02834cd5fc4..a2897ea9e80 100644
        arm_float_abi = "softfp"
      }
 diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
-index de15cb053e4..402ed5da180 100644
+index 7eb0314f3c6..94a630db26b 100644
 --- a/engine/src/build/config/compiler/BUILD.gn
 +++ b/engine/src/build/config/compiler/BUILD.gn
 @@ -4,7 +4,7 @@
@@ -69,7 +69,7 @@ index de15cb053e4..402ed5da180 100644
    import("//build/config/arm.gni")
  }
  if (is_posix) {
-@@ -215,30 +215,78 @@ config("compiler") {
+@@ -234,30 +234,78 @@ config("compiler") {
          ]
        }
      } else if (current_cpu == "arm") {
@@ -171,7 +171,7 @@ index de15cb053e4..402ed5da180 100644
      }
  
 diff --git a/engine/src/build/config/sysroot.gni b/engine/src/build/config/sysroot.gni
-index 5f7e48a6f1c..8bb5841899a 100644
+index fde619f0003..505ecb46234 100644
 --- a/engine/src/build/config/sysroot.gni
 +++ b/engine/src/build/config/sysroot.gni
 @@ -25,10 +25,16 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
@@ -193,5 +193,5 @@ index 5f7e48a6f1c..8bb5841899a 100644
          exec_script("//build/dir_exists.py", [ sysroot ], "string") == "True",
          "Missing sysroot ($sysroot). To fix, run: build/linux/sysroot_scripts/install-sysroot.py --arch=$current_cpu")
 -- 
-2.50.1.windows.1
+2.48.1
 

@@ -1,7 +1,7 @@
-From 937b524a401212bfac5d1c902873ea2e28ac4664 Mon Sep 17 00:00:00 2001
+From e06c2551a3dedfa4439e8833e39bb3d0b3a3f153 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Thu, 22 Jun 2023 16:30:00 +0000
-Subject: [PATCH 02/10] always include debug symbols
+Subject: [PATCH 2/9] always include debug symbols
 
 Always build with `-ggdb -fdebug-default-version=4` by default.
 Symbols are stripped later anyway and they're still useful for debugging.
@@ -10,19 +10,19 @@ Symbols are stripped later anyway and they're still useful for debugging.
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
-index 402ed5da180..ca2cd91bb9d 100644
+index 94a630db26b..c033928c415 100644
 --- a/engine/src/build/config/compiler/BUILD.gn
 +++ b/engine/src/build/config/compiler/BUILD.gn
-@@ -1034,7 +1034,7 @@ config("symbols") {
+@@ -1098,7 +1098,7 @@ config("symbols") {
        ldflags = [ "-gsource-map" ]
      }
    } else {
 -    cflags = [ "-g2" ]
 +    cflags = [ "-ggdb", "-fdebug-default-version=4" ]
-   }
- }
- 
-@@ -1043,13 +1043,13 @@ config("minimal_symbols") {
+     if (is_apple) {
+       swiftflags = [ "-g" ]
+     }
+@@ -1110,13 +1110,13 @@ config("minimal_symbols") {
      # Linker symbols for backtraces only.
      ldflags = [ "/DEBUG" ]
    } else {
@@ -39,5 +39,5 @@ index 402ed5da180..ca2cd91bb9d 100644
  }
  
 -- 
-2.50.1.windows.1
+2.48.1
 

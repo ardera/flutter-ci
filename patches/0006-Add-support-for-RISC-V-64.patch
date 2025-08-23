@@ -1,7 +1,7 @@
-From 5c913fc9c03a0a34eaeca369ae51479efb1396d3 Mon Sep 17 00:00:00 2001
+From 7596f42ffdff24b52985f51f031248e87f2e18b7 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Mon, 20 Jan 2025 15:41:41 +0000
-Subject: [PATCH 06/10] Add support for RISC-V 64
+Subject: [PATCH 6/9] Add support for RISC-V 64
 
 - allows specifying `--linux-cpu=riscv64` for `gn` tool
 - adds riscv64 architecture recognitition to some headers
@@ -23,10 +23,10 @@ Subject: [PATCH 06/10] Add support for RISC-V 64
  7 files changed, 35 insertions(+), 5 deletions(-)
 
 diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
-index ca2cd91bb9d..842bbdb8ede 100644
+index c033928c415..763f941f780 100644
 --- a/engine/src/build/config/compiler/BUILD.gn
 +++ b/engine/src/build/config/compiler/BUILD.gn
-@@ -288,6 +288,11 @@ config("compiler") {
+@@ -307,6 +307,11 @@ config("compiler") {
        if (arm_tune != "") {
          cflags += [ "-mtune=$arm_tune" ]
        }
@@ -39,7 +39,7 @@ index ca2cd91bb9d..842bbdb8ede 100644
  
      if (!is_android) {
 diff --git a/engine/src/build/config/sysroot.gni b/engine/src/build/config/sysroot.gni
-index 8bb5841899a..d19048d2178 100644
+index 505ecb46234..dd19dc83656 100644
 --- a/engine/src/build/config/sysroot.gni
 +++ b/engine/src/build/config/sysroot.gni
 @@ -21,7 +21,16 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
@@ -61,11 +61,11 @@ index 8bb5841899a..d19048d2178 100644
        sysroot =
            rebase_path("//build/linux/debian_sid_amd64-sysroot", root_build_dir)
 diff --git a/engine/src/flutter/BUILD.gn b/engine/src/flutter/BUILD.gn
-index 37a834b42ce..fb90cb91a81 100644
+index dd3a0c4cf08..42da0a46650 100644
 --- a/engine/src/flutter/BUILD.gn
 +++ b/engine/src/flutter/BUILD.gn
-@@ -96,11 +96,15 @@ group("flutter") {
-   if (!is_fuchsia) {
+@@ -102,11 +102,15 @@ group("flutter") {
+   if (!is_fuchsia && !is_qnx) {
      public_deps += [ "//flutter/lib/snapshot:generate_snapshot_bins" ]
  
 -    if (host_os == "linux") {
@@ -129,10 +129,10 @@ index 365808a1a78..bdc18c0750d 100644
  #error Please add support for your architecture in build/build_config.h
  #endif
 diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
-index d0725275cc8..804b88eb334 100755
+index a97f35fbdd4..9bc3d47e284 100755
 --- a/engine/src/flutter/tools/gn
 +++ b/engine/src/flutter/tools/gn
-@@ -936,7 +936,7 @@ def parse_args(args):
+@@ -944,7 +944,7 @@ def parse_args(args):
    parser.add_argument('--web', action='store_true', default=False)
    parser.add_argument('--windows', dest='target_os', action='store_const', const='win')
  
@@ -142,5 +142,5 @@ index d0725275cc8..804b88eb334 100755
    parser.add_argument('--windows-cpu', type=str, choices=['x64', 'arm64', 'x86'], default='x64')
    parser.add_argument('--simulator-cpu', type=str, choices=['x64', 'arm64'], default='x64')
 -- 
-2.50.1.windows.1
+2.48.1
 

@@ -1,4 +1,4 @@
-From 376b31172df353a72bc73f536faa2f5273363f70 Mon Sep 17 00:00:00 2001
+From af37f101b41dfe89dcfd5f90a8c4980954968cb3 Mon Sep 17 00:00:00 2001
 From: Lu Yahan <luyahan@qq.com>
 Date: Tue, 3 Dec 2024 09:58:29 -0800
 Subject: [PATCH 2/2] PR #1788: Fix warning for sign-conversion on riscv
@@ -21,7 +21,7 @@ Change-Id: Ia95d342ddd277dcbde19008e31aaef09f3c3a282
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/absl/debugging/internal/stacktrace_riscv-inl.inc b/absl/debugging/internal/stacktrace_riscv-inl.inc
-index 528ef707..3f9e1240 100644
+index 528ef70..3f9e124 100644
 --- a/absl/debugging/internal/stacktrace_riscv-inl.inc
 +++ b/absl/debugging/internal/stacktrace_riscv-inl.inc
 @@ -44,7 +44,8 @@ template <typename T>
@@ -35,5 +35,5 @@ index 528ef707..3f9e1240 100644
  
  // Given a pointer to a stack frame, locate and return the calling stackframe,
 -- 
-2.34.1
+2.48.1
 

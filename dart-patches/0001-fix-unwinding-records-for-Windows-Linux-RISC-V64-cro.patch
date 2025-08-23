@@ -1,4 +1,4 @@
-From b7b88e8c7d3e6b8460e94f58232a7f87245bd885 Mon Sep 17 00:00:00 2001
+From ccd8e6038afad65426bc161ca0ebcf9a4b4f207d Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Thu, 12 Jun 2025 18:50:33 +0200
 Subject: [PATCH] fix: unwinding records for Windows -> Linux RISC-V64
@@ -8,14 +8,14 @@ According to comments, unwinding records are not used for gen_snapshot.
 So we implement them similar to how they're implemented for unsupported
 platforms, as no-ops.
 ---
- runtime/platform/unwinding_records_win.cc | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
+ runtime/platform/unwinding_records_win.cc | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
 
 diff --git a/runtime/platform/unwinding_records_win.cc b/runtime/platform/unwinding_records_win.cc
-index 6f9c6dc4442..c8de6e1d5ab 100644
+index da871a640cb..3a1ebf81764 100644
 --- a/runtime/platform/unwinding_records_win.cc
 +++ b/runtime/platform/unwinding_records_win.cc
-@@ -16,6 +16,9 @@ namespace dart {
+@@ -15,6 +15,9 @@ namespace dart {
  const intptr_t kReservedUnwindingRecordsSizeBytes = 64;
  #elif defined(TARGET_ARCH_ARM64)
  const intptr_t kReservedUnwindingRecordsSizeBytes = 4 * KB;
@@ -25,9 +25,9 @@ index 6f9c6dc4442..c8de6e1d5ab 100644
  #else
  #error Unhandled Windows architecture.
  #endif
-@@ -31,6 +34,18 @@ intptr_t UnwindingRecordsPlatform::SizeInBytes() {
- #if defined(DART_HOST_OS_WINDOWS) && defined(ARCH_IS_64_BIT) &&                \
-     (!defined(DART_PRECOMPILER) || defined(TESTING))
+@@ -29,6 +32,23 @@ intptr_t UnwindingRecordsPlatform::SizeInBytes() {
+ // as it is the only client of these methods (e.g., _not_ in gen_snapshot).
+ #if defined(UNWINDING_RECORDS_WINDOWS_HOST)
  
 +#if defined(TARGET_ARCH_RISCV64)
 +
@@ -37,6 +37,11 @@ index 6f9c6dc4442..c8de6e1d5ab 100644
 +  void* start,
 +  intptr_t size,
 +  void** pp_dynamic_table) {}
++void UnwindingRecordsPlatform::RegisterExecutableMemory(
++    void* start,
++    intptr_t size,
++    void* records_start,
++    void** pp_dynamic_table) {}
 +void UnwindingRecordsPlatform::UnregisterDynamicTable(void* p_dynamic_table) {}
 +
 +#else
@@ -44,15 +49,15 @@ index 6f9c6dc4442..c8de6e1d5ab 100644
  void UnwindingRecordsPlatform::RegisterExecutableMemory(
      void* start,
      intptr_t size,
-@@ -58,6 +73,8 @@ void UnwindingRecordsPlatform::UnregisterDynamicTable(void* p_dynamic_table) {
+@@ -65,6 +85,8 @@ void UnwindingRecordsPlatform::UnregisterDynamicTable(void* p_dynamic_table) {
    RtlDeleteGrowableFunctionTable(p_dynamic_table);
  }
  
 +#endif  // defined(TARGET_ARCH_RISCV64) ...
 +
- #endif  // defined(DART_HOST_OS_WINDOWS) ...
+ #endif  // defined(UNWINDING_RECORDS_WINDOWS_HOST)
  
  }  // namespace dart
 -- 
-2.30.0.windows.2
+2.48.1
 
