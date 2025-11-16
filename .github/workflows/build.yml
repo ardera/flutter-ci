@@ -112,7 +112,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-13
+          - macos-15-intel
           - windows-2022
     steps:
       - name: Configure git
@@ -802,7 +802,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - macos-13
+          - macos-15-intel
           - ubuntu-latest
           - windows-2022
         artifact-name:
@@ -897,7 +897,7 @@ jobs:
             generic-arch-artifact-name: x64-generic
             target-flags: "--arch=x64"
 
-          - os: macos-13
+          - os: macos-15-intel
             gen-snapshot-name: "gen_snapshot"
           - os: ubuntu-latest
             gen-snapshot-name: "gen_snapshot"
