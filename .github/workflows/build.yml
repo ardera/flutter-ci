@@ -181,12 +181,13 @@ jobs:
           gclient sync --no-history --shallow --revision .@${{ needs.resolve-version.outputs.engine-ref || needs.resolve-version.outputs.engine-hash }} -R -D
 
       - name: Install linux arm sysroot
-        if: steps.cache-lookup.outputs.cache-hit != 'true' && runner.os == 'Linux'
+        if: steps.cache-lookup.outputs.cache-hit != 'true'
         working-directory: flutter/engine/src/build/linux/sysroot_scripts
         run: |
           ./install-sysroot.py --arch=arm
           ./install-sysroot.py --arch=arm64
           ./install-sysroot.py --arch=amd64
+          ./install-sysroot.py --arch=riscv64
 
       - name: Delete unneeded dependencies
         if: steps.cache-lookup.outputs.cache-hit != 'true'
@@ -336,13 +337,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build
 
-          # The engine scripts don't provide a sysroot for RISC-V 64,
-          # so we rely on the headers/libs provided by the gcc-riscv64-linux-gnu
-          # cross toolchain.
-          if ${{ matrix.build-riscv64-gen-snapshot || (matrix.build-engine && matrix.cpu == 'riscv64') }}; then
-            sudo apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
-          fi
-
       - name: Install dependencies (MacOS)
         if: runner.os == 'macOS'
         run: |
@@ -432,21 +426,6 @@ jobs:
           pushd engine/src/flutter/third_party/dart
           git reset --soft unpatched-dart
           popd
-
-      # This can't be done in the prepopulate step since on MacOS, it depends
-      # on a buildroot patch.
-      #
-      # We actually don't need the sysroots to build the gen_snapshots,
-      # but configuring will fail if they're missing.
-      #
-      # That's why the RISC-V gen_snapshots build fine, even though it
-      # doesn't have a sysroot.
-      - name: Download linux sysroot
-        working-directory: flutter/engine/src/build/linux/sysroot_scripts
-        if: matrix.cpu && matrix.cpu != 'riscv64' && runner.os == 'macOS'
-        timeout-minutes: 5
-        run: |
-          ./install-sysroot.py --arch=${{ matrix.cpu == 'x64' && 'amd64' || matrix.cpu }}
 
       - name: Configure engine
         working-directory: flutter/engine/src
