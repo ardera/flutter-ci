@@ -396,31 +396,42 @@ jobs:
           key: flutter-${{ needs.resolve-version.outputs.engine-hash }}-${{ runner.os }}-${{ runner.arch }}
           fail-on-cache-miss: true
 
-      - name: Apply patches
+      - name: Setup Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install workflow_tool dependencies
+        working-directory: workflow_tool
+        run: dart pub get
+
+      - name: Tag dart & flutter repositories
         working-directory: flutter
-        # use git apply instead of git am to avoid `Committer identity unknown` error
         run: |
-          echo Applying patches...
-          git apply $GITHUB_WORKSPACE_UNIX/patches/*.patch
-          git status
+          # Tag the Flutter repo at current commit
+          git tag -f unpatched-flutter
 
-          if [ -d "$GITHUB_WORKSPACE_UNIX/dart-patches" ]; then
-            pushd engine/src/flutter/third_party/dart
+          # Tag the Dart repo at current commit
+          pushd engine/src/flutter/third_party/dart
+          git tag -f unpatched-dart
+          popd
 
-            git apply $GITHUB_WORKSPACE_UNIX/dart-patches/*.patch
-            git status
+      - name: Apply patches
+        run: |
+          dart run ${{ github.workspace }}/workflow_tool/bin/patch.dart apply \
+            ${{ github.workspace }}/patches/patches.json \
+            ${{ github.workspace }}/flutter
 
-            popd
-          fi
+      - name: Soft reset dart & flutter repositories
+        working-directory: flutter
+        run: |
+          # Soft reset Flutter repo to preserve version but keep changes
+          git reset --soft unpatched-flutter
 
-          if [ -d "$GITHUB_WORKSPACE_UNIX/abseil-patches" ]; then
-            pushd engine/src/flutter/third_party/abseil-cpp
-
-            git apply $GITHUB_WORKSPACE_UNIX/abseil-patches/*.patch
-            git status
-
-            popd
-          fi
+          # Soft reset Dart repo to preserve version but keep changes
+          pushd engine/src/flutter/third_party/dart
+          git reset --soft unpatched-dart
+          popd
 
       # This can't be done in the prepopulate step since on MacOS, it depends
       # on a buildroot patch.
@@ -437,48 +448,6 @@ jobs:
         run: |
           ./install-sysroot.py --arch=${{ matrix.cpu == 'x64' && 'amd64' || matrix.cpu }}
 
-      - name: Download Windows VC++ 14.42 toolset
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # Download the VC++ 14.42 toolset for Windows.
-          # By default, the latest version is used, and versions 14.44 and above
-          # required Clang 19; while the engine only comes with Clang 18.
-          #
-          # Partially inspired by:
-          #   https://github.com/actions/runner-images/blob/main/images/windows/scripts/helpers/VisualStudioHelpers.ps1
-
-          $InstallPath = 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise'
-          $BootstrapperPath = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe'
-
-          # Components to ADD
-          $AddComponents = @(
-              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM',
-              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM.Spectre',
-              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM64',
-              'Microsoft.VisualStudio.Component.VC.14.42.17.12.ARM64.Spectre',
-              'Microsoft.VisualStudio.Component.VC.14.42.17.12.x86.x64',
-              'Microsoft.VisualStudio.Component.VC.14.42.17.12.x86.x64.Spectre'
-          )
-
-          # Create response JSON
-          $response = @{
-              installPath = $InstallPath
-              add         = $AddComponents
-          }
-          $responseFilePath = "$env:TEMP\vs_modify_response.json"
-          $response | ConvertTo-Json -Depth 3 | Out-File -FilePath $responseFilePath -Encoding UTF8
-
-          # Run bootstrapper with response file
-          $Arguments = (
-              'modify',
-              '--in', $responseFilePath,
-              '--quiet', '--nocache', '--norestart'
-          )
-
-          Write-Host "Modifying Visual Studio installation at: $InstallPath"
-          Start-Process -FilePath $BootstrapperPath -ArgumentList $Arguments -Wait -PassThru
-
       - name: Configure engine
         working-directory: flutter/engine/src
         run: |
@@ -493,8 +462,8 @@ jobs:
             --no-build-glfw-shell \
             --no-build-embedder-examples \
             --no-enable-unittests \
+            --enable-minimal-linux \
             --no-goma \
-            --gn-args 'vc_version="14.42"' \
             ${{ matrix.unoptimized && '--unoptimized' || ''}} \
             ${{ matrix.nostripped && '--no-stripped' || ''}} \
             ${{ matrix.arm-cpu && format('--gn-args ''arm_cpu="{0}"''', matrix.arm-cpu) || '' }} \
