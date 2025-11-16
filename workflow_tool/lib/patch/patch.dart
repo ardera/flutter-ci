@@ -3,22 +3,15 @@ import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 import 'config.dart';
 
-enum ApplyMode {
-  apply,
-  am,
-}
-
 class PatchApplier {
   final PatchConfig config;
   final String configDir;
   final String root;
-  final ApplyMode mode;
 
   PatchApplier({
     required this.config,
     required this.configDir,
     required this.root,
-    required this.mode,
   });
 
   /// Apply all patches from the configuration
@@ -49,10 +42,75 @@ class PatchApplier {
 
     print('Applying patches to $repoPath...');
 
+    // Get current commit hash
+    final currentCommit = await _getCurrentCommit(repoPath);
+
+    // Tag the unpatched commit
+    await _tagUnpatchedCommit(repoPath, currentCommit);
+
+    // Create and checkout a new branch for patches
+    await _createPatchBranch(repoPath, currentCommit);
+
     // Apply each patch
     for (final patchPath in dep.patches) {
       await _applyPatch(repoPath, patchPath);
     }
+  }
+
+  /// Get the current commit hash
+  Future<String> _getCurrentCommit(String repoPath) async {
+    final result = await Process.run(
+      'git',
+      ['rev-parse', 'HEAD'],
+      workingDirectory: repoPath,
+    );
+
+    if (result.exitCode != 0) {
+      stderr.writeln('Error: Failed to get current commit in $repoPath');
+      stderr.write(result.stderr);
+      exit(1);
+    }
+
+    return (result.stdout as String).trim();
+  }
+
+  /// Tag the unpatched commit
+  Future<void> _tagUnpatchedCommit(String repoPath, String commitHash) async {
+    final tagName = 'unpatched';
+
+    final result = await Process.run(
+      'git',
+      ['tag', '-f', tagName, commitHash],
+      workingDirectory: repoPath,
+    );
+
+    if (result.exitCode != 0) {
+      stderr.writeln('Error: Failed to tag unpatched commit in $repoPath');
+      stderr.write(result.stderr);
+      exit(1);
+    }
+
+    print('Tagged unpatched state as $tagName');
+  }
+
+  /// Create and checkout a new branch for patches
+  Future<void> _createPatchBranch(String repoPath, String commitHash) async {
+    final branchName = 'patched';
+
+    // Create branch
+    var result = await Process.run(
+      'git',
+      ['checkout', '-B', branchName],
+      workingDirectory: repoPath,
+    );
+
+    if (result.exitCode != 0) {
+      stderr.writeln('Error: Failed to create patch branch in $repoPath');
+      stderr.write(result.stderr);
+      exit(1);
+    }
+
+    print('Created and checked out branch $branchName');
   }
 
   /// Apply a single patch file
@@ -67,13 +125,10 @@ class PatchApplier {
       exit(1);
     }
 
-    // Determine git command based on mode
-    final gitCommand = mode == ApplyMode.am ? 'am' : 'apply';
-
-    // Run git command
+    // Run git am
     final process = await Process.start(
       'git',
-      [gitCommand, absolutePatchPath],
+      ['am', absolutePatchPath],
       workingDirectory: repoPath,
       runInShell: false,
       mode: ProcessStartMode.inheritStdio,
@@ -91,9 +146,6 @@ class PatchApplier {
 /// Main entry point for the patch CLI
 Future<void> main(List<String> arguments) async {
   final parser = ArgParser()
-    ..addFlag('apply',
-        help: 'Use git apply (default)', negatable: false, defaultsTo: false)
-    ..addFlag('am', help: 'Use git am', negatable: false, defaultsTo: false)
     ..addFlag('help',
         abbr: 'h', help: 'Show usage information', negatable: false);
 
@@ -118,26 +170,15 @@ Future<void> main(List<String> arguments) async {
     exit(1);
   }
 
-  // Check for required arguments: flutter-root and config file
+  // Check for required arguments: config file and checkout path
   if (argResults.rest.length < 3) {
     stderr.writeln('Error: Missing required arguments');
     _printUsage(parser);
     exit(1);
   }
 
-  final root = argResults.rest[1];
-  final configPath = argResults.rest[2];
-
-  // Determine apply mode
-  final useAm = argResults['am'] as bool;
-  final useApply = argResults['apply'] as bool;
-
-  if (useAm && useApply) {
-    stderr.writeln('Error: Cannot specify both --am and --apply');
-    exit(1);
-  }
-
-  final mode = useAm ? ApplyMode.am : ApplyMode.apply;
+  final configPath = argResults.rest[1];
+  final root = argResults.rest[2];
 
   try {
     // Load configuration
@@ -146,10 +187,10 @@ Future<void> main(List<String> arguments) async {
     // Get the directory containing the config file
     final configDir = p.dirname(p.absolute(configPath));
 
-    // Verify flutter root exists
+    // Verify checkout root exists
     final rootDir = Directory(root);
     if (!rootDir.existsSync()) {
-      stderr.writeln('Error: Root directory does not exist: $root');
+      stderr.writeln('Error: Checkout directory does not exist: $root');
       exit(1);
     }
 
@@ -158,7 +199,6 @@ Future<void> main(List<String> arguments) async {
       config: config,
       configDir: configDir,
       root: root,
-      mode: mode,
     );
 
     await applier.applyAll();
@@ -178,11 +218,12 @@ void _printUsage(ArgParser parser) {
   print(
       'Usage: dart run workflow_tool:patch apply <config-file> <checkout> [options]');
   print('');
-  print('Apply patches from a JSON configuration file to git repositories.');
+  print(
+      'Apply patches from a JSON configuration file to git repositories using git am.');
   print('');
   print('Arguments:');
-  print('  config-file Path to the JSON configuration file');
-  print('  checkout    Path to the gclient project checkout checkout');
+  print('  config-file  Path to the JSON configuration file');
+  print('  checkout     Path to the project checkout directory');
   print('');
   print('Options:');
   print(parser.usage);
