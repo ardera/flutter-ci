@@ -89,10 +89,10 @@ jobs:
             echo "channel=beta" >> $GITHUB_OUTPUT
             CHANNEL=beta
           elif ${{ startsWith(github.ref, 'refs/pull') && 'true' || 'false' }}; then
-            echo "is-stable=false" >> $GITHUB_OUTPUT
-            echo "is-beta=true" >> $GITHUB_OUTPUT
-            echo "channel=beta" >> $GITHUB_OUTPUT
-            CHANNEL=beta
+            echo "is-stable=true" >> $GITHUB_OUTPUT
+            echo "is-beta=false" >> $GITHUB_OUTPUT
+            echo "channel=stable" >> $GITHUB_OUTPUT
+            CHANNEL=stable
           else
             echo "Could not determine channel."
             exit 1
