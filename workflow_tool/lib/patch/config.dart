@@ -14,6 +14,13 @@ class Dependency {
     required this.patches,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'path': path,
+      'patches': patches,
+    };
+  }
+
   factory Dependency.fromJson(Map<String, dynamic> json) {
     if (!json.containsKey('path')) {
       throw FormatException('Missing required field: path');
@@ -41,6 +48,20 @@ class PatchConfig {
 
   PatchConfig({required this.deps});
 
+  Map<String, dynamic> toJson() {
+    return {
+      'deps': deps.map((d) => d.toJson()).toList(),
+    };
+  }
+
+  /// Save configuration to a JSON file
+  void saveToFile(String path) {
+    final file = File(path);
+    final encoder = JsonEncoder.withIndent('  ');
+    final jsonString = encoder.convert(toJson());
+    file.writeAsStringSync(jsonString);
+  }
+
   factory PatchConfig.fromJson(Map<String, dynamic> json) {
     if (!json.containsKey('deps')) {
       throw FormatException('Missing required field: deps');
@@ -52,9 +73,7 @@ class PatchConfig {
     }
 
     return PatchConfig(
-      deps: deps
-          .map((d) => Dependency.fromJson(d as Map<String, dynamic>))
-          .toList(),
+      deps: deps.map((d) => Dependency.fromJson(d as Map<String, dynamic>)).toList(),
     );
   }
 
