@@ -80,7 +80,7 @@ class PatchRecorder {
     print('Found ${commits.length} commit(s) to export');
 
     // Create patch directory for this dependency
-    final patchDirName = _getPatchDirName(repoPath);
+    final patchDirName = _getPatchDirName(repo: repoPath, root: root);
     final patchDir = Directory(p.join(configDir, patchDirName));
     if (!await patchDir.exists()) {
       await patchDir.create(recursive: true);
@@ -233,12 +233,9 @@ class PatchRecorder {
   }
 
   /// Get patch directory name from repository path
-  String _getPatchDirName(String repoPath) {
-    // Normalize path and remove leading ./
-    var normalized = p.normalize(repoPath);
-    if (normalized.startsWith('./')) {
-      normalized = normalized.substring(2);
-    }
+  String _getPatchDirName({required String repo, required String root}) {
+    // make repo path relative to root (regardless of whether repo is relative or absolute)
+    var normalized = p.relative(p.join(root, repo), from: root);
 
     // For root path (.), use a default name
     if (normalized == '.') {
