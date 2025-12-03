@@ -6,26 +6,18 @@
         "flutter/0001-fix-armv7-build-make-arm64-tune-work.patch",
         "flutter/0002-always-include-debug-symbols.patch",
         "flutter/0003-support-cross-building-linux-engine-from-macos.patch",
-        "flutter/0004-build-all-gen_snapshots-by-default.patch",
+        "flutter/0004-build-all-gen-snapshots-by-default.patch",
         "flutter/0005-support-cross-building-linux-engine-from-windows.patch",
         "flutter/0006-Add-support-for-RISC-V-64.patch",
-        "flutter/0007-don-t-look-for-freetype2.patch",
-        "flutter/0008-don-t-use-vulkan-xcb-wayland-WSI-integrations.patch",
-        "flutter/0009-fix-windows-linux-riscv64-gen_snapshot-build.patch",
-        "flutter/0010-Windows-Allow-configuring-VC-compiler-toolset-versio.patch"
+        "flutter/0007-don-t-use-vulkan-xcb-wayland-wsi-integrations.patch",
+        "flutter/0008-fix-windows-linux-riscv64-gen-snapshot-build.patch",
+        "flutter/0009-windows-allow-configuring-vc-compiler-toolset-version.patch"
       ]
     },
     {
       "path": "engine/src/flutter/third_party/dart",
       "patches": [
-        "dart/0001-fix-unwinding-records-for-Windows-Linux-RISC-V64-cro.patch"
-      ]
-    },
-    {
-      "path": "engine/src/flutter/third_party/abseil-cpp",
-      "patches": [
-        "abseil/0001-PR-1783-riscv-debugging-Fix-a-few-warnings-in-RISC-V.patch",
-        "abseil/0002-PR-1788-Fix-warning-for-sign-conversion-on-riscv.patch"
+        "dart/0001-fix-unwinding-records-for-windows-linux-risc-v64-cross-build.patch"
       ]
     }
   ]

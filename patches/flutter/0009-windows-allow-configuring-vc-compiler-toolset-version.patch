@@ -1,8 +1,7 @@
-From deca5be1b3071974b4bd4f282a27e9a84b8de346 Mon Sep 17 00:00:00 2001
+From 155a1c5c0d74db4e46bd02eabf36fc5f86eb7a74 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Sun, 27 Jul 2025 22:28:44 +0200
-Subject: [PATCH 10/10] Windows: Allow configuring VC++ compiler toolset
- version
+Subject: [PATCH] Windows: Allow configuring VC++ compiler toolset version
 
 The flutter engine currently does not compile with VC++ compiler
 toolset 14.44,
@@ -131,5 +130,5 @@ index a6e8328b236..6a2534cab0d 100644
                      "scope")
    }
 -- 
-2.50.1.windows.1
+2.50.1 (Apple Git-155)
 
