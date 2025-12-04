@@ -22,7 +22,7 @@ jobs:
 
     strategy:
       matrix: 
-        channel: [ stable, beta ]
+        channel: [ stable ]
 
     steps:
       - uses: actions/checkout@v4
@@ -39,9 +39,7 @@ jobs:
           set -euo pipefail
 
           # If debugging is enabled, trace bash commands
-          if ${{ runner.debug && 'true' || 'false' }}; then
-            set -x
-          fi
+          ${{ runner.debug && 'set -x' }}
           
           # First, try to find a /bin/internal/engine.version file in the engine repo.
           ENGINE_HASH=$(curl --fail https://raw.githubusercontent.com/flutter/flutter/refs/heads/${{ matrix.channel }}/bin/internal/engine.version)
@@ -91,9 +89,7 @@ jobs:
         id: check-roll
         run: |
           # If debugging is enabled, trace bash commands
-          if ${{ runner.debug && 'true' || 'false' }}; then
-            set -x
-          fi
+          ${{ runner.debug && 'set -x' }}
 
           echo "::group::git status"
           git status
@@ -120,9 +116,7 @@ jobs:
       - name: Commit & Push
         run: |
           # If debugging is enabled, trace bash commands
-          if ${{ runner.debug && 'true' || 'false' }}; then
-            set -x
-          fi
+          ${{ runner.debug && 'set -x' }}
 
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
