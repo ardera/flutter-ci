@@ -18,6 +18,12 @@
       "patches": [
         "dart/0001-fix-unwinding-records-for-windows-linux-risc-v64-cross-build.patch"
       ]
+    },
+    {
+      "path": "engine/src/flutter/third_party/abseil-cpp",
+      "patches": [
+        "abseil/0001-PR-1783-riscv-debugging-Fix-a-few-warnings-in-RISC-V.patch"
+      ]
     }
   ]
 }
