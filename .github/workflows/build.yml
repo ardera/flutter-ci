@@ -412,9 +412,9 @@ jobs:
 
       - name: Apply patches
         run: |
-          dart run ${{ github.workspace }}/workflow_tool/bin/patch.dart apply \
-            ${{ github.workspace }}/patches/patches.json \
-            ${{ github.workspace }}/flutter
+          dart run $GITHUB_WORKSPACE_UNIX/workflow_tool/bin/patch.dart apply \
+            $GITHUB_WORKSPACE_UNIX/patches/patches.json \
+            $GITHUB_WORKSPACE_UNIX/flutter
 
       - name: Soft reset dart & flutter repositories
         working-directory: flutter
