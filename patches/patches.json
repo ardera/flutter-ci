@@ -10,8 +10,7 @@
         "flutter/0005-support-cross-building-linux-engine-from-windows.patch",
         "flutter/0006-Add-support-for-RISC-V-64.patch",
         "flutter/0007-don-t-use-vulkan-xcb-wayland-wsi-integrations.patch",
-        "flutter/0008-fix-windows-linux-riscv64-gen-snapshot-build.patch",
-        "flutter/0009-windows-allow-configuring-vc-compiler-toolset-version.patch"
+        "flutter/0008-fix-windows-linux-riscv64-gen-snapshot-build.patch"
       ]
     },
     {
