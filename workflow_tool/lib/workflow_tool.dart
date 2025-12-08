@@ -24,7 +24,7 @@ const kJobName = 'job-name';
 enum GithubRunner {
   ubuntuLatest('ubuntu-latest', 'Linux', OS.linux),
   macosLatest('macos-latest', 'MacOS', OS.macOS, arch: Arch.arm64),
-  macos13('macos-13', 'MacOS', OS.macOS, arch: Arch.x64),
+  macos15Intel('macos-15-intel', 'MacOS', OS.macOS, arch: Arch.x64),
   windows2022('windows-2022', 'Windows', OS.windows);
 
   const GithubRunner(this.name, this.nice, this.os, {this.arch = Arch.x64});
@@ -299,7 +299,11 @@ Object generateMatrix() {
   final flavors = Flavor.values;
   final runtimeModes = RuntimeMode.values;
   final aotRuntimeModes = runtimeModes.where((mode) => mode.isAOT).toList();
-  final runners = {GithubRunner.ubuntuLatest, GithubRunner.macos13, GithubRunner.windows2022};
+  final runners = {
+    GithubRunner.ubuntuLatest,
+    GithubRunner.macos15Intel,
+    GithubRunner.windows2022,
+  };
 
   for (final target in targets) {
     final targetConfig = genTargetConfig(target);

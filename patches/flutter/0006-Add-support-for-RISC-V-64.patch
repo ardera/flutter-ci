@@ -1,0 +1,71 @@
+From abb9bb7dda303195efccc7fec22632ec78d47908 Mon Sep 17 00:00:00 2001
+From: Hannes Winkler <hanneswinkler2000@web.de>
+Date: Mon, 20 Jan 2025 15:41:41 +0000
+Subject: [PATCH] Add support for RISC-V 64
+
+- allows specifying `--linux-cpu=riscv64` for `gn` tool
+- specify `--target=riscv64-linux-gnu` when building for linux riscv64
+- cross-compile risc-v gen_snapshot as well
+- only generate a clang_arm/gen_snapshot target when building
+  for a 32-bit target (so only arm right now)
+---
+ engine/src/build/config/compiler/BUILD.gn |  5 +++++
+ engine/src/flutter/BUILD.gn               | 10 +++++++---
+ engine/src/flutter/tools/gn               |  2 +-
+ 3 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
+index 9d13be241e5..fd51085c734 100644
+--- a/engine/src/build/config/compiler/BUILD.gn
++++ b/engine/src/build/config/compiler/BUILD.gn
+@@ -309,6 +309,11 @@ config("compiler") {
+       if (arm_tune != "") {
+         cflags += [ "-mtune=$arm_tune" ]
+       }
++    } else if (current_cpu == "riscv64") {
++      assert(is_clang)
++
++      cflags += [ "--target=riscv64-linux-gnu" ]
++      ldflags += [ "--target=riscv64-linux-gnu" ]
+     }
+ 
+     if (!is_android) {
+diff --git a/engine/src/flutter/BUILD.gn b/engine/src/flutter/BUILD.gn
+index 093adb3467e..f9e4bd18bd5 100644
+--- a/engine/src/flutter/BUILD.gn
++++ b/engine/src/flutter/BUILD.gn
+@@ -102,11 +102,15 @@ group("flutter") {
+   if (!is_fuchsia && !is_qnx) {
+     public_deps += [ "//flutter/lib/snapshot:generate_snapshot_bins" ]
+ 
+-    if (host_os == "linux") {
++    if (host_os == "linux" && target_os == "linux") {
+       public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_x64)" ]
+       public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_arm64)" ]
+-      public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_arm)" ]
+-    }
++      public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_riscv64)" ]
++
++      if (target_cpu == "arm") {
++        public_deps += [ "$dart_src/runtime/bin:gen_snapshot(//build/toolchain/linux:clang_arm)" ]
++      }
++   }
+ 
+     if (build_engine_artifacts) {
+       public_deps += [
+diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
+index ab585ecd063..897085228d4 100755
+--- a/engine/src/flutter/tools/gn
++++ b/engine/src/flutter/tools/gn
+@@ -970,7 +970,7 @@ def parse_args(args):
+   parser.add_argument('--web', action='store_true', default=False)
+   parser.add_argument('--windows', dest='target_os', action='store_const', const='win')
+ 
+-  parser.add_argument('--linux-cpu', type=str, choices=['x64', 'x86', 'arm64', 'arm'])
++  parser.add_argument('--linux-cpu', type=str, choices=['x64', 'x86', 'arm64', 'arm', 'riscv64'])
+   parser.add_argument('--fuchsia-cpu', type=str, choices=['x64', 'arm64'], default='x64')
+   parser.add_argument('--windows-cpu', type=str, choices=['x64', 'arm64', 'x86'], default='x64')
+   parser.add_argument('--simulator-cpu', type=str, choices=['x64', 'arm64'], default='x64')
+-- 
+2.50.1 (Apple Git-155)
+

@@ -1,7 +1,7 @@
-From 5d18de61d9289f040bc16840a5097984707cd31b Mon Sep 17 00:00:00 2001
+From 78ed38cf2c4378eb30623f79d0fd7134bd3f04f7 Mon Sep 17 00:00:00 2001
 From: Alexey Pavlyutkin <92360856+apavlyutkin@users.noreply.github.com>
 Date: Wed, 6 Nov 2024 11:30:17 -0800
-Subject: [PATCH 1/2] PR #1783: [riscv][debugging] Fix a few warnings in RISC-V
+Subject: [PATCH] PR #1783: [riscv][debugging] Fix a few warnings in RISC-V
  inlines
 
 Imported from GitHub PR https://github.com/abseil/abseil-cpp/pull/1783
@@ -20,7 +20,7 @@ Change-Id: Ibfefc9370606a6b8ec217ac6d87d7c6d70d1a3ce
  1 file changed, 7 insertions(+), 5 deletions(-)
 
 diff --git a/absl/debugging/internal/stacktrace_riscv-inl.inc b/absl/debugging/internal/stacktrace_riscv-inl.inc
-index 20183fa..528ef70 100644
+index 20183fa3..528ef707 100644
 --- a/absl/debugging/internal/stacktrace_riscv-inl.inc
 +++ b/absl/debugging/internal/stacktrace_riscv-inl.inc
 @@ -36,12 +36,12 @@
@@ -61,5 +61,5 @@ index 20183fa..528ef70 100644
        n++;
      }
 -- 
-2.48.1
+2.50.1 (Apple Git-155)
 
