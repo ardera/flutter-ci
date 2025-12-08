@@ -25,7 +25,7 @@ enum GithubRunner {
   ubuntuLatest('ubuntu-latest', 'Linux', OS.linux),
   macosLatest('macos-latest', 'MacOS', OS.macOS, arch: Arch.arm64),
   macos13('macos-13', 'MacOS', OS.macOS, arch: Arch.x64),
-  windowsLatest('windows-latest', 'Windows', OS.windows);
+  windows2022('windows-2022', 'Windows', OS.windows);
 
   const GithubRunner(this.name, this.nice, this.os, {this.arch = Arch.x64});
 
@@ -69,11 +69,9 @@ enum Arch {
   arm.bits32('ARM', 'arm', 'armv7'),
   arm64.bits64('ARM64', 'arm64', 'aarch64');
 
-  const Arch.bits32(this.ghActionsName, this.flutterCpu, this.ciName)
-      : bitness = Bitness.bits32;
+  const Arch.bits32(this.ghActionsName, this.flutterCpu, this.ciName) : bitness = Bitness.bits32;
 
-  const Arch.bits64(this.ghActionsName, this.flutterCpu, this.ciName)
-      : bitness = Bitness.bits64;
+  const Arch.bits64(this.ghActionsName, this.flutterCpu, this.ciName) : bitness = Bitness.bits64;
 
   final String ghActionsName;
   final String flutterCpu;
@@ -260,12 +258,11 @@ Map<String, Object> genGenSnapshotConfig(
     // There's no exception for arm (32-bit) targetting aarch64 or x64 though.
     // So the ARM (32-bit) host gen_snapshot can only be built when targetting
     // armv7 as well.
-    kBuildARMGenSnapshot: (runner.os == OS.linux && target.arch == Arch.arm) ||
-        runner.arch == Arch.arm,
+    kBuildARMGenSnapshot:
+        (runner.os == OS.linux && target.arch == Arch.arm) || runner.arch == Arch.arm,
     kBuildARM64GenSnapshot: runner.os == OS.linux || runner.arch == Arch.arm64,
     kBuildX64GenSnapshot: runner.os == OS.linux || runner.arch == Arch.x64,
-    kBuildRISCV64GenSnapshot:
-        runner.os == OS.linux || runner.arch == Arch.riscv64,
+    kBuildRISCV64GenSnapshot: runner.os == OS.linux || runner.arch == Arch.riscv64,
 
     kARMGenSnapshotPath: runner.os == OS.linux && target.arch == Arch.arm
         ? 'gen_snapshot'
@@ -282,12 +279,11 @@ Map<String, Object> genGenSnapshotConfig(
         : runner.os == OS.windows
             ? 'gen_snapshot/gen_snapshot.exe'
             : 'clang_x64/gen_snapshot',
-    kRISCV64GenSnapshotPath:
-        runner.os == OS.linux && target.arch == Arch.riscv64
-            ? 'gen_snapshot'
-            : runner.os == OS.windows
-                ? 'gen_snapshot/gen_snapshot.exe'
-                : 'clang_riscv64/gen_snapshot',
+    kRISCV64GenSnapshotPath: runner.os == OS.linux && target.arch == Arch.riscv64
+        ? 'gen_snapshot'
+        : runner.os == OS.windows
+            ? 'gen_snapshot/gen_snapshot.exe'
+            : 'clang_riscv64/gen_snapshot',
   };
 }
 
@@ -303,26 +299,20 @@ Object generateMatrix() {
   final flavors = Flavor.values;
   final runtimeModes = RuntimeMode.values;
   final aotRuntimeModes = runtimeModes.where((mode) => mode.isAOT).toList();
-  final runners = {
-    GithubRunner.ubuntuLatest,
-    GithubRunner.macos13,
-    GithubRunner.windowsLatest
-  };
+  final runners = {GithubRunner.ubuntuLatest, GithubRunner.macos13, GithubRunner.windows2022};
 
   for (final target in targets) {
     final targetConfig = genTargetConfig(target);
 
     // For the tuned targets, we only build the profile and release mode engine.
     // Doesn't make sense to have a tuned version for a debug build.
-    final flavorsToBuild =
-        target.cpu == CPU.generic ? flavors : [Flavor.profile, Flavor.release];
+    final flavorsToBuild = target.cpu == CPU.generic ? flavors : [Flavor.profile, Flavor.release];
 
     for (final flavor in flavorsToBuild) {
       // add the engine build job for that target
 
       // if we're building for generic CPUs, additionally build the gen_snapshot.
-      final buildGenSnapshot =
-          target.cpu == CPU.generic && flavor.buildGenSnapshot;
+      final buildGenSnapshot = target.cpu == CPU.generic && flavor.buildGenSnapshot;
 
       if (buildGenSnapshot) {
         for (final runner in runners) {
@@ -344,8 +334,7 @@ Object generateMatrix() {
             });
           } else {
             addJob({
-              kJobName:
-                  'build gen_snapshot (for: $target, flavor: $flavor, host: ${runner.os})',
+              kJobName: 'build gen_snapshot (for: $target, flavor: $flavor, host: ${runner.os})',
               ...targetConfig,
               ...genGenSnapshotConfig(
                 flavor.runtimeMode,

@@ -331,7 +331,7 @@ void main() {
     final matrix = generateMatrix();
 
     final anyKnownRunnerImage =
-        anyOf('ubuntu-latest', 'macos-latest', 'macos-13', 'windows-latest');
+        anyOf('ubuntu-latest', 'macos-latest', 'macos-13', 'windows-latest', 'windows-2022');
 
     expect(
       matrix,
