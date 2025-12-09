@@ -180,8 +180,8 @@ jobs:
         run: |
           gclient sync --no-history --shallow --revision .@${{ needs.resolve-version.outputs.engine-ref || needs.resolve-version.outputs.engine-hash }} -R -D
 
-      - name: Install linux arm sysroot
-        if: steps.cache-lookup.outputs.cache-hit != 'true'
+      - name: Install linux sysroots (macOS/Linux)
+        if: steps.cache-lookup.outputs.cache-hit != 'true' && runner.os != 'Windows'
         working-directory: flutter/engine/src/build/linux/sysroot_scripts
         run: |
           ./install-sysroot.py --arch=arm
