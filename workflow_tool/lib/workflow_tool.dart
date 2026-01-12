@@ -86,7 +86,7 @@ enum CPU {
   generic('generic', 'generic'),
   pi3('cortex-a53+nocrypto', 'cortex-a53'),
   pi4('cortex-a72+nocrypto', 'cortex-a72'),
-  pi5('cortex-a76+nocrypto', 'cortex-a76');
+  pi5('cortex-a76', 'cortex-a76');
 
   const CPU(this.compilerCpu, this.cmopilerTune);
 

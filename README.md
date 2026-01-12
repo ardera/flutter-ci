@@ -48,7 +48,7 @@ arm_tune = "cortex-a72"
 
 When tuning for pi 5:
 ```
-arm_cpu = "cortex-a76+nocrypto"
+arm_cpu = "cortex-a76"
 arm_tune = "cortex-a76"
 ```
 
@@ -65,7 +65,7 @@ This will result in the clang compiler being invoked with the following args:
 | pi3             | `--target=armv7-linux-gnueabihf    -mcpu=cortex-a53+nocrypto -mtune=cortex-a53`[^3] |
 | aarch64-generic | `--target=aarch64-linux-gnu        -mcpu=generic             -mtune=generic`    |
 | pi4-64          | `--target=aarch64-linux-gnu        -mcpu=cortex-a72+nocrypto -mtune=cortex-a72`[^1] |
-| pi5-64          | `--target=aarch64-linux-gnu        -mcpu=cortex-a76+nocrypto -mtune=cortex-a76`[^4] |
+| pi5-64          | `--target=aarch64-linux-gnu        -mcpu=cortex-a76          -mtune=cortex-a76`     |
 | pi3-64          | `--target=aarch64-linux-gnu        -mcpu=cortex-a53+nocrypto -mtune=cortex-a53`[^3] |
 | x64-generic     | `--target=x86_64-unknown-linux-gnu -mcpu=generic             -mtune=generic` |
 
@@ -90,7 +90,5 @@ objcopy --strip-unneeded libflutter_engine.so
 [^1]: The CPU of the Raspberry Pi 4 is a Cortex-A72. `+nocrypto` is specified for `-mcpu` because the A72 in the Pi 4 is (_apparently_) the only A72 in the world that doesn't support cryptography instructions: https://github.com/ardera/flutter-ci/issues/3#issuecomment-1272330857
 
 [^3]: Pi 3 doesn't support cryptography extensions either.
-
-[^4]: The Raspberry Pi 5 uses a Cortex-A76. Using `+nocrypto` for consistency with Pi 3/Pi 4 builds, though the A76 in Pi 5 does support crypto extensions.
 
 [^2]: `--arm-float-abi hard` is only specified when building for armv7, `--unoptimized` is only specified for unoptimized debug builds.
