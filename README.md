@@ -1,7 +1,7 @@
 # flutter engine binaries for armv7, aarch64, x64
 
 This repo contains flutter engine binaries (in the https://github.com/ardera/flutter-engine-binaries-for-arm filesystem layout) for armv7 and aarch64.
-The binaries come in 2 variants: generic, and tuned for the Pi 4 CPU.
+The binaries come in variants: generic, and tuned for the Pi 3, Pi 4, and Pi 5 CPUs.
 
 # 📦 Downloads
 
@@ -46,6 +46,12 @@ arm_cpu = "cortex-a72+nocrypto"
 arm_tune = "cortex-a72"
 ```
 
+When tuning for pi 5:
+```
+arm_cpu = "cortex-a76"
+arm_tune = "cortex-a76"
+```
+
 For both armv7 and aarch64, the engine is built against the sysroot provided by the engine build scripts, which is some debian sid sysroot from 2020.
 (See https://github.com/flutter/buildroot/blob/master/build/linux/sysroot_scripts/install-sysroot.py)
 
@@ -59,6 +65,7 @@ This will result in the clang compiler being invoked with the following args:
 | pi3             | `--target=armv7-linux-gnueabihf    -mcpu=cortex-a53+nocrypto -mtune=cortex-a53`[^3] |
 | aarch64-generic | `--target=aarch64-linux-gnu        -mcpu=generic             -mtune=generic`    |
 | pi4-64          | `--target=aarch64-linux-gnu        -mcpu=cortex-a72+nocrypto -mtune=cortex-a72`[^1] |
+| pi5-64          | `--target=aarch64-linux-gnu        -mcpu=cortex-a76          -mtune=cortex-a76`     |
 | pi3-64          | `--target=aarch64-linux-gnu        -mcpu=cortex-a53+nocrypto -mtune=cortex-a53`[^3] |
 | x64-generic     | `--target=x86_64-unknown-linux-gnu -mcpu=generic             -mtune=generic` |
 

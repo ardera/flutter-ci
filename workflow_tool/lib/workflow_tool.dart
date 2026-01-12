@@ -85,7 +85,8 @@ enum Arch {
 enum CPU {
   generic('generic', 'generic'),
   pi3('cortex-a53+nocrypto', 'cortex-a53'),
-  pi4('cortex-a72+nocrypto', 'cortex-a72');
+  pi4('cortex-a72+nocrypto', 'cortex-a72'),
+  pi5('cortex-a76', 'cortex-a76');
 
   const CPU(this.compilerCpu, this.cmopilerTune);
 
@@ -134,6 +135,12 @@ enum Target {
     arch: Arch.arm64,
     cpu: CPU.pi4,
     name: 'pi4-64',
+    triple: 'aarch64-linux-gnu',
+  ),
+  pi5_64(
+    arch: Arch.arm64,
+    cpu: CPU.pi5,
+    name: 'pi5-64',
     triple: 'aarch64-linux-gnu',
   ),
   riscv64(
