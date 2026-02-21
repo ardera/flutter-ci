@@ -15,7 +15,7 @@ index 5efa8523449..bd1868b21b9 100644
  # set anything.
  
  if (is_linux) {
--  vulkan_use_x11 = true
+-  vulkan_use_x11 = !is_minimal_linux
 -  vulkan_use_wayland = true
 +  vulkan_use_x11 = false
 +  vulkan_use_wayland = false
