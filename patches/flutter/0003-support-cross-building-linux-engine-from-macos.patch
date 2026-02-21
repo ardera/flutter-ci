@@ -16,8 +16,8 @@ linux embedder: always depend on `libflutter_linux_gtk.so` instead of
  engine/src/build/config/BUILDCONFIG.gn           | 14 +++++++++-----
  engine/src/build/toolchain/linux/BUILD.gn        | 14 +++++++++-----
  engine/src/flutter/shell/platform/linux/BUILD.gn |  4 ++--
- engine/src/flutter/tools/gn                      |  6 +++---
- 4 files changed, 23 insertions(+), 15 deletions(-)
+ engine/src/flutter/tools/gn                      |  4 ++--
+ 4 files changed, 22 insertions(+), 14 deletions(-)
 
 diff --git a/engine/src/build/config/BUILDCONFIG.gn b/engine/src/build/config/BUILDCONFIG.gn
 index 596fd4fef78..444da0e0a83 100644
@@ -107,15 +107,6 @@ index 3f910272891..8241613a5bf 100755
    # The Mac and host targets are redundant. Again, necessary to disambiguate
    # during cross-compilation.
    if args.target_os == 'mac':
-@@ -648,7 +648,7 @@ def to_gn_args(args):
-   else:
-     gn_args['skia_use_gl'] = args.target_os != 'fuchsia'
- 
--  if sys.platform == 'darwin' and args.target_os not in ['android', 'fuchsia']:
-+  if sys.platform == 'darwin' and args.target_os not in ['android', 'fuchsia', 'linux']:
-     # OpenGL is deprecated on macOS > 10.11.
-     # This is not necessarily needed but enabling this until we have a way to
-     # build a macOS metal only shell and a gl only shell.
 -- 
 2.50.1 (Apple Git-155)
 
