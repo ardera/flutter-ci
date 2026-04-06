@@ -22,7 +22,15 @@ jobs:
     
     steps:
       - uses: actions/checkout@v3
-      
+
+      - name: Populate googlesource git cookies
+        env:
+          GOOGLESOURCE_COOKIE: ${{ secrets.GOOGLESOURCE_COOKIE }}
+        run: |
+          if [ -n "$GOOGLESOURCE_COOKIE" ]; then
+            eval "$GOOGLESOURCE_COOKIE"
+          fi
+
       - name: 'Setup depot tools'
         run: |
           rm -rf ${{ github.workspace }}/depot_tools

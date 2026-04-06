@@ -141,6 +141,15 @@ jobs:
           path: ${{ github.workspace }}/depot_tools
           key: ${{ runner.os }}-${{ runner.arch }}-depot-tools
 
+      - name: Populate googlesource git cookies
+        if: steps.cache-lookup.outputs.cache-hit != 'true'
+        env:
+          GOOGLESOURCE_COOKIE: ${{ secrets.GOOGLESOURCE_COOKIE }}
+        run: |
+          if [ -n "$GOOGLESOURCE_COOKIE" ]; then
+            eval "$GOOGLESOURCE_COOKIE"
+          fi
+
       - name: Clone depot_tools (if not cached)
         if: steps.cache-lookup.outputs.cache-hit != 'true' && steps.cache-depot-tools.outputs.cache-hit != 'true'
         working-directory: ${{ github.workspace }}
@@ -354,6 +363,14 @@ jobs:
         with:
           path: ${{ github.workspace }}/depot_tools
           key: ${{ runner.os }}-${{ runner.arch }}-depot-tools
+
+      - name: Populate googlesource git cookies
+        env:
+          GOOGLESOURCE_COOKIE: ${{ secrets.GOOGLESOURCE_COOKIE }}
+        run: |
+          if [ -n "$GOOGLESOURCE_COOKIE" ]; then
+            eval "$GOOGLESOURCE_COOKIE"
+          fi
 
       - name: Clone depot tools
         if: steps.cache-depot-tools.outputs.cache-hit != 'true'
