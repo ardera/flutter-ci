@@ -1,7 +1,7 @@
-From 1a3e2104701c884daf9483f7842249d68d1ce393 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hannes Winkler <hanneswinkler2000@web.de>
 Date: Wed, 11 Aug 2021 02:21:25 +0200
-Subject: [PATCH] fix armv7 build - make arm64 tune work
+Subject: [PATCH 1/8] fix armv7 build - make arm64 tune work
 
 ---
  engine/src/build/config/arm.gni           | 27 ++-----
@@ -10,7 +10,7 @@ Subject: [PATCH] fix armv7 build - make arm64 tune work
  3 files changed, 84 insertions(+), 42 deletions(-)
 
 diff --git a/engine/src/build/config/arm.gni b/engine/src/build/config/arm.gni
-index 02834cd5fc4..a2897ea9e80 100644
+index 02834cd5..a2897ea9 100644
 --- a/engine/src/build/config/arm.gni
 +++ b/engine/src/build/config/arm.gni
 @@ -22,8 +22,15 @@ if (current_cpu == "arm" || current_cpu == "arm64") {
@@ -57,7 +57,7 @@ index 02834cd5fc4..a2897ea9e80 100644
        arm_float_abi = "softfp"
      }
 diff --git a/engine/src/build/config/compiler/BUILD.gn b/engine/src/build/config/compiler/BUILD.gn
-index 50f1b60eab1..dce3e27efe0 100644
+index e06cf625..9edd083b 100644
 --- a/engine/src/build/config/compiler/BUILD.gn
 +++ b/engine/src/build/config/compiler/BUILD.gn
 @@ -4,7 +4,7 @@
@@ -171,7 +171,7 @@ index 50f1b60eab1..dce3e27efe0 100644
      }
  
 diff --git a/engine/src/build/config/sysroot.gni b/engine/src/build/config/sysroot.gni
-index 12c8df99f44..feb2cad8604 100644
+index 12c8df99..feb2cad8 100644
 --- a/engine/src/build/config/sysroot.gni
 +++ b/engine/src/build/config/sysroot.gni
 @@ -31,6 +31,11 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
@@ -186,6 +186,3 @@ index 12c8df99f44..feb2cad8604 100644
      }
      assert(
          exec_script("//build/dir_exists.py", [ sysroot ], "string") == "True",
--- 
-2.50.1 (Apple Git-155)
-
