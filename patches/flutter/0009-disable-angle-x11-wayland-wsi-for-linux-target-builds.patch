@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Rebase Bot <rebase@local>
+Date: Thu, 16 Jul 2026 17:55:51 -0700
+Subject: [PATCH] disable ANGLE x11/wayland WSI for linux target builds
+
+Flutter 3.44 evaluates //flutter/third_party/angle for linux target
+builds (via //flutter/testing swangle utils). angle_use_wayland
+defaults to is_linux, but Flutter's //build_overrides/wayland.gni
+doesn't define wayland_dir, so gn gen fails:
+
+  ERROR at //flutter/third_party/angle/BUILD.gn:1204:9:
+  Undefined identifier in string expansion. "wayland_dir" is not
+  currently in scope.
+
+Upstream avoids this because desktop linux builds are host builds
+(no --target-os), which already set angle_use_wayland=false. Extend
+the same treatment to explicit linux target builds. Subsumes the
+'linux on windows host' special case from the previous patch.
+---
+ engine/src/flutter/tools/gn | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/engine/src/flutter/tools/gn b/engine/src/flutter/tools/gn
+index 5eacfc09..3df29ba7 100755
+--- a/engine/src/flutter/tools/gn
++++ b/engine/src/flutter/tools/gn
+@@ -804,7 +804,7 @@ def to_gn_args(args):
+   # There is a special case for Android on Windows because there we _only_ build
+   # gen_snapshot, but the build defines otherwise make it look like the build is
+   # for a host Windows build and make GN think we will be building ANGLE.
+-  if is_host_build(args) or ((args.target_os == 'android' or args.target_os == 'linux') and get_host_os() == 'win'):
++  if is_host_build(args) or args.target_os == 'linux' or (args.target_os == 'android' and get_host_os() == 'win'):
+     # Don't include git commit information.
+     gn_args['angle_enable_commit_id'] = False
+     # Do not build unnecessary parts of the ANGLE tree.
